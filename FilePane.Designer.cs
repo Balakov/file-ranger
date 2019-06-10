@@ -36,6 +36,7 @@
             this.SizeColumnHeader = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.AttribColumnHeader = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.ModifiedColumnHeader = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
+            this.StatusBarRefreshTimer = new System.Windows.Forms.Timer(this.components);
             this.StatusBar.SuspendLayout();
             this.FilePaneContextMenuStrip.SuspendLayout();
             this.SuspendLayout();
@@ -211,6 +212,11 @@
             this.ModifiedColumnHeader.Text = "Modified";
             this.ModifiedColumnHeader.Width = 126;
             // 
+            // StatusBarRefreshTimer
+            // 
+            this.StatusBarRefreshTimer.Interval = 250;
+            this.StatusBarRefreshTimer.Tick += new System.EventHandler(this.StatusBarRefreshTimer_Tick);
+            // 
             // FilePane
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -250,5 +256,6 @@
         private System.Windows.Forms.ToolStripMenuItem cutToolStripMenuItem;
         private System.Windows.Forms.ToolStripSeparator toolStripMenuItem3;
         private System.Windows.Forms.ToolStripMenuItem propertiesToolStripMenuItem;
+        private System.Windows.Forms.Timer StatusBarRefreshTimer;
     }
 }

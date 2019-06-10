@@ -1041,8 +1041,9 @@ namespace Ranger
 
         private void FileListView_ItemSelectionChanged(object sender, ListViewItemSelectionChangedEventArgs e)
         {
-            // Recalculate the status info
-            UpdateStatusBar();
+            // Recalculate the status info - we want to batch up refreshes if they happen too close together
+            StatusBarRefreshTimer.Stop();
+            StatusBarRefreshTimer.Start();
         }
 
         private void NewFileToolStripMenuItem_Click(object sender, EventArgs e)
@@ -1181,5 +1182,10 @@ namespace Ranger
             ModifiedColumnHeader.Width = Convert.ToInt32(config.GetValue(prefix + "modifiedcolumnwidth", ModifiedColumnHeader.Width.ToString()));
         }
 
+        private void StatusBarRefreshTimer_Tick(object sender, EventArgs e)
+        {
+            StatusBarRefreshTimer.Stop();
+            UpdateStatusBar();
+        }
     }
 }
