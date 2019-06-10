@@ -64,7 +64,7 @@
       <SubType>Component</SubType>
     </Compile>
     <Compile Include="IconHelper\IconHelper.cs" />
-    <Compile Include="IconHelper\IconListManager.cs" />
+    <Compile Include="IconHelper\ShellIconCache.cs" />
     <Compile Include="NetworkShares\Shares.cs" />
     <Compile Include="PathHistory.cs" />
     <Compile Include="RangerMainForm.cs">

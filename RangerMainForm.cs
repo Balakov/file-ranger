@@ -12,7 +12,8 @@ namespace Ranger
     {
         private ImageList m_smallImageList = new ImageList();
         private ImageList m_largeImageList = new ImageList();
-        private Etier.IconHelper.IconListManager m_iconListManager;
+        private IconListManager m_iconListManager;
+        //private Etier.IconHelper.IconListManager m_iconListManager;
 
         private FilePane m_activePane = null;
         ManagementEventWatcher m_driveWatcher = new ManagementEventWatcher();
@@ -61,7 +62,8 @@ namespace Ranger
             m_smallImageList.ImageSize = new System.Drawing.Size(16, 16);
             m_largeImageList.ImageSize = new System.Drawing.Size(32, 32);
 
-            m_iconListManager = new Etier.IconHelper.IconListManager(m_smallImageList, m_largeImageList);
+            //m_iconListManager = new Etier.IconHelper.IconListManager(m_smallImageList, m_largeImageList);
+            m_iconListManager = new IconListManager(m_smallImageList, m_largeImageList);
 
             DrivesTreeView.ImageList = m_smallImageList;
             LeftFilePane.ListView.SmallImageList = m_smallImageList;
@@ -172,7 +174,7 @@ namespace Ranger
 
         private void AddDriveToTree(TreeNode root, DriveInfo drive)
         {
-            int folderIconIndex = m_iconListManager.AddDriveIcon(drive.RootDirectory.FullName);
+            int folderIconIndex = m_iconListManager.AddDriveIcon(drive.RootDirectory.FullName, false);
 
             TreeNode node = new TreeNode($"{drive.Name} ({drive.VolumeLabel})", folderIconIndex, folderIconIndex);
             node.Tag = new LazyDirectoryTag(drive.RootDirectory.FullName);
@@ -487,7 +489,7 @@ namespace Ranger
                             Color itemColour;
                             if (ViewFilter.FilterViewByAttributes(di.Attributes, m_viewMask, out itemColour))
                             {
-                                int folderIconIndex = m_iconListManager.AddFolderIcon(dir);
+                                int folderIconIndex = m_iconListManager.AddFolderIcon(dir, false);
 
                                 TreeNode node = new TreeNode(Path.GetFileName(dir), folderIconIndex, folderIconIndex)
                                 {
@@ -626,12 +628,12 @@ namespace Ranger
 
             if (type == BookmarkType.Directory)
             {
-                imageIndex = m_iconListManager.AddFolderIcon(path);
+                imageIndex = m_iconListManager.AddFolderIcon(path, true);
                 tag = new BookmarkDirectoryTag(path);
             }
             else
             {
-                imageIndex = m_iconListManager.AddFileIcon(path);
+                imageIndex = m_iconListManager.AddFileIcon(path, true);
                 tag = new BookmarkFileTag(path);
             }
 

@@ -50,7 +50,8 @@ namespace Ranger
 
         private FileSystemWatcher m_fileWatcher = new FileSystemWatcher();
 
-        public Etier.IconHelper.IconListManager IconListManager { private get; set; }
+        //public Etier.IconHelper.IconListManager IconListManager { private get; set; }
+        public IconListManager IconListManager { private get; set; }
 
         private readonly char[] m_invalidFilenmameChars = Path.GetInvalidFileNameChars();
 
@@ -227,7 +228,7 @@ namespace Ranger
                             string dateString = di.LastWriteTime.ToString("dd/MM/yyyy HH:mm:ss");
                             string attribsString = AttribsToString(di.Attributes);
 
-                            int folderIconIndex = IconListManager.AddFolderIcon(di.FullName);
+                            int folderIconIndex = IconListManager.AddFolderIcon(di.FullName, false);
 
                             var lvi = new ListViewItem(new string[] { Path.GetFileName(di.FullName), sizeString, attribsString, dateString }, folderIconIndex)
                             {
@@ -287,7 +288,7 @@ namespace Ranger
                             string dateString = fi.LastWriteTime.ToString("dd/MM/yyyy HH:mm:ss");
                             string attribsString = AttribsToString(fi.Attributes);
 
-                            var lvi = new ListViewItem(new string[] { Path.GetFileName(fi.FullName), sizeString, attribsString, dateString }, IconListManager.AddFileIcon(fi.FullName))
+                            var lvi = new ListViewItem(new string[] { Path.GetFileName(fi.FullName), sizeString, attribsString, dateString }, IconListManager.AddFileIcon(fi.FullName, false))
                             {
                                 Tag = new FileTag(fi),
                                 ForeColor = itemColour
