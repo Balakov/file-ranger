@@ -52,9 +52,12 @@
             this.FilePaneSplitContainer = new System.Windows.Forms.SplitContainer();
             this.DrivesTreeView = new System.Windows.Forms.TreeView();
             this.splitContainer3 = new System.Windows.Forms.SplitContainer();
+            this.SetEditorFileDialog = new System.Windows.Forms.OpenFileDialog();
             this.LeftFilePane = new Ranger.FilePane();
             this.RightFilePane = new Ranger.FilePane();
-            this.SetEditorFileDialog = new System.Windows.Forms.OpenFileDialog();
+            this.bookmarksToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.addCurrentDirectoryToToolstripToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.addCurrentDirectoryToTreeToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             ((System.ComponentModel.ISupportInitialize)(this.MainSplitContainer)).BeginInit();
             this.MainSplitContainer.Panel1.SuspendLayout();
             this.MainSplitContainer.Panel2.SuspendLayout();
@@ -91,7 +94,7 @@
             // 
             this.MainSplitContainer.Panel2.Controls.Add(this.FilePaneSplitContainer);
             this.MainSplitContainer.Size = new System.Drawing.Size(1249, 842);
-            this.MainSplitContainer.SplitterDistance = 85;
+            this.MainSplitContainer.SplitterDistance = 90;
             this.MainSplitContainer.TabIndex = 0;
             this.MainSplitContainer.TabStop = false;
             // 
@@ -99,9 +102,10 @@
             // 
             this.PathTextBox.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
+            this.PathTextBox.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.PathTextBox.Location = new System.Drawing.Point(6, 24);
             this.PathTextBox.Name = "PathTextBox";
-            this.PathTextBox.Size = new System.Drawing.Size(1238, 20);
+            this.PathTextBox.Size = new System.Drawing.Size(1238, 23);
             this.PathTextBox.TabIndex = 0;
             this.PathTextBox.KeyDown += new System.Windows.Forms.KeyEventHandler(this.PathTextBox_KeyDown);
             // 
@@ -116,14 +120,14 @@
             this.toolStripSeparator1,
             this.ParentToolStripButton,
             this.toolStripSeparator2});
-            this.NavigationToolStrip.Location = new System.Drawing.Point(0, 47);
+            this.NavigationToolStrip.Location = new System.Drawing.Point(0, 52);
             this.NavigationToolStrip.Name = "NavigationToolStrip";
             this.NavigationToolStrip.Size = new System.Drawing.Size(1249, 38);
             this.NavigationToolStrip.Stretch = true;
             this.NavigationToolStrip.TabIndex = 4;
             this.NavigationToolStrip.Text = "toolStrip1";
-            this.NavigationToolStrip.DragDrop += new System.Windows.Forms.DragEventHandler(this.NavigationToolStrip_DragDrop);
-            this.NavigationToolStrip.DragOver += new System.Windows.Forms.DragEventHandler(this.NavigationToolStrip_DragOver);
+            this.NavigationToolStrip.DragDrop += new System.Windows.Forms.DragEventHandler(this.BookmarkContainer_DragDrop);
+            this.NavigationToolStrip.DragOver += new System.Windows.Forms.DragEventHandler(this.BookmarkContainer_DragOver);
             // 
             // BookmarksContextMenuStrip
             // 
@@ -131,7 +135,8 @@
             this.deleteToolStripMenuItem,
             this.renameToolStripMenuItem});
             this.BookmarksContextMenuStrip.Name = "BookmarksContextMenuStrip";
-            this.BookmarksContextMenuStrip.Size = new System.Drawing.Size(184, 48);
+            this.BookmarksContextMenuStrip.Size = new System.Drawing.Size(184, 70);
+            this.BookmarksContextMenuStrip.Opening += new System.ComponentModel.CancelEventHandler(this.BookmarksContextMenuStrip_Opening);
             // 
             // deleteToolStripMenuItem
             // 
@@ -191,7 +196,8 @@
             // 
             this.MyMainMenuStrip.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.fileToolStripMenuItem,
-            this.viewToolStripMenuItem});
+            this.viewToolStripMenuItem,
+            this.bookmarksToolStripMenuItem});
             this.MyMainMenuStrip.Location = new System.Drawing.Point(0, 0);
             this.MyMainMenuStrip.Name = "MyMainMenuStrip";
             this.MyMainMenuStrip.Size = new System.Drawing.Size(1249, 24);
@@ -265,22 +271,28 @@
             // FilePaneSplitContainer.Panel2
             // 
             this.FilePaneSplitContainer.Panel2.Controls.Add(this.splitContainer3);
-            this.FilePaneSplitContainer.Size = new System.Drawing.Size(1249, 753);
+            this.FilePaneSplitContainer.Size = new System.Drawing.Size(1249, 748);
             this.FilePaneSplitContainer.SplitterDistance = 205;
             this.FilePaneSplitContainer.TabIndex = 0;
             this.FilePaneSplitContainer.TabStop = false;
             // 
             // DrivesTreeView
             // 
+            this.DrivesTreeView.AllowDrop = true;
+            this.DrivesTreeView.ContextMenuStrip = this.BookmarksContextMenuStrip;
             this.DrivesTreeView.Dock = System.Windows.Forms.DockStyle.Fill;
             this.DrivesTreeView.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.DrivesTreeView.HideSelection = false;
             this.DrivesTreeView.Location = new System.Drawing.Point(0, 0);
             this.DrivesTreeView.Name = "DrivesTreeView";
-            this.DrivesTreeView.Size = new System.Drawing.Size(205, 753);
+            this.DrivesTreeView.ShowNodeToolTips = true;
+            this.DrivesTreeView.Size = new System.Drawing.Size(205, 748);
             this.DrivesTreeView.TabIndex = 0;
             this.DrivesTreeView.TabStop = false;
             this.DrivesTreeView.BeforeExpand += new System.Windows.Forms.TreeViewCancelEventHandler(this.DrivesTreeView_BeforeExpand);
             this.DrivesTreeView.AfterSelect += new System.Windows.Forms.TreeViewEventHandler(this.DrivesTreeView_AfterSelect);
+            this.DrivesTreeView.DragDrop += new System.Windows.Forms.DragEventHandler(this.BookmarkContainer_DragDrop);
+            this.DrivesTreeView.DragOver += new System.Windows.Forms.DragEventHandler(this.BookmarkContainer_DragOver);
             this.DrivesTreeView.MouseClick += new System.Windows.Forms.MouseEventHandler(this.DrivesTreeView_MouseClick);
             // 
             // splitContainer3
@@ -296,17 +308,21 @@
             // splitContainer3.Panel2
             // 
             this.splitContainer3.Panel2.Controls.Add(this.RightFilePane);
-            this.splitContainer3.Size = new System.Drawing.Size(1040, 753);
+            this.splitContainer3.Size = new System.Drawing.Size(1040, 748);
             this.splitContainer3.SplitterDistance = 520;
             this.splitContainer3.TabIndex = 0;
             this.splitContainer3.TabStop = false;
+            // 
+            // SetEditorFileDialog
+            // 
+            this.SetEditorFileDialog.FileName = "openFileDialog1";
             // 
             // LeftFilePane
             // 
             this.LeftFilePane.Dock = System.Windows.Forms.DockStyle.Fill;
             this.LeftFilePane.Location = new System.Drawing.Point(0, 0);
             this.LeftFilePane.Name = "LeftFilePane";
-            this.LeftFilePane.Size = new System.Drawing.Size(520, 753);
+            this.LeftFilePane.Size = new System.Drawing.Size(520, 748);
             this.LeftFilePane.TabIndex = 0;
             // 
             // RightFilePane
@@ -314,12 +330,31 @@
             this.RightFilePane.Dock = System.Windows.Forms.DockStyle.Fill;
             this.RightFilePane.Location = new System.Drawing.Point(0, 0);
             this.RightFilePane.Name = "RightFilePane";
-            this.RightFilePane.Size = new System.Drawing.Size(516, 753);
+            this.RightFilePane.Size = new System.Drawing.Size(516, 748);
             this.RightFilePane.TabIndex = 0;
             // 
-            // SetEditorFileDialog
+            // bookmarksToolStripMenuItem
             // 
-            this.SetEditorFileDialog.FileName = "openFileDialog1";
+            this.bookmarksToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.addCurrentDirectoryToToolstripToolStripMenuItem,
+            this.addCurrentDirectoryToTreeToolStripMenuItem});
+            this.bookmarksToolStripMenuItem.Name = "bookmarksToolStripMenuItem";
+            this.bookmarksToolStripMenuItem.Size = new System.Drawing.Size(78, 20);
+            this.bookmarksToolStripMenuItem.Text = "Bookmarks";
+            // 
+            // addCurrentDirectoryToToolstripToolStripMenuItem
+            // 
+            this.addCurrentDirectoryToToolstripToolStripMenuItem.Name = "addCurrentDirectoryToToolstripToolStripMenuItem";
+            this.addCurrentDirectoryToToolstripToolStripMenuItem.Size = new System.Drawing.Size(253, 22);
+            this.addCurrentDirectoryToToolstripToolStripMenuItem.Text = "Add Current Directory to Toolstrip";
+            this.addCurrentDirectoryToToolstripToolStripMenuItem.Click += new System.EventHandler(this.AddCurrentDirectoryToToolstripToolStripMenuItem_Click);
+            // 
+            // addCurrentDirectoryToTreeToolStripMenuItem
+            // 
+            this.addCurrentDirectoryToTreeToolStripMenuItem.Name = "addCurrentDirectoryToTreeToolStripMenuItem";
+            this.addCurrentDirectoryToTreeToolStripMenuItem.Size = new System.Drawing.Size(253, 22);
+            this.addCurrentDirectoryToTreeToolStripMenuItem.Text = "Add Current Directory to Tree";
+            this.addCurrentDirectoryToTreeToolStripMenuItem.Click += new System.EventHandler(this.AddCurrentDirectoryToTreeToolStripMenuItem_Click);
             // 
             // RangerMainForm
             // 
@@ -381,6 +416,9 @@
         private System.Windows.Forms.ToolStripSeparator toolStripSeparator2;
         private System.Windows.Forms.ToolStripMenuItem renameToolStripMenuItem;
         private System.Windows.Forms.TextBox PathTextBox;
+        private System.Windows.Forms.ToolStripMenuItem bookmarksToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem addCurrentDirectoryToToolstripToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem addCurrentDirectoryToTreeToolStripMenuItem;
     }
 }
 

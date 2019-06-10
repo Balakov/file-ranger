@@ -22,6 +22,9 @@ namespace Ranger
         public static string DefaultEditorPath { get; private set; }
 
         private Config m_config = new Config();
+        private static RangerMainForm s_instance = null;
+
+        private bool m_preventDirectoryChangeEventOnTreeNodeSelect = false;
 
         private enum BookmarkType
         {
@@ -29,8 +32,16 @@ namespace Ranger
             File
         }
 
+        private enum BookmarkContainer
+        {
+            Toolbar,
+            TreeView
+        }
+
         public RangerMainForm()
         {
+            s_instance = this;
+
             InitializeComponent();
         }
 
@@ -61,9 +72,6 @@ namespace Ranger
             LeftFilePane.IconListManager = m_iconListManager;
             RightFilePane.IconListManager = m_iconListManager;
 
-            // Bookmarks
-            SetBookmarksFromConfig();
-
             // View Mask
             if (m_config.GetValue("showhiddenfiles", false.ToString()) != false.ToString())
             {
@@ -85,6 +93,9 @@ namespace Ranger
             // Pane paths
 
             string firstReadyDrivePath = BuildDrivesTreeView();
+
+            // Bookmarks
+            SetBookmarksFromConfig();
 
             string leftDefaultPath = m_config.GetValue("leftpath", firstReadyDrivePath);
             string rightDefaultPath = m_config.GetValue("rightpath", firstReadyDrivePath);
@@ -116,14 +127,27 @@ namespace Ranger
         {
             DrivesTreeView.BeginUpdate();
 
-            DrivesTreeView.Nodes.Clear();
+            // Store all the bookmark nodes
+            var bookmarks = new List<TreeNode>();
+            if (DrivesTreeView.Nodes.Count > 0)
+            {
+                foreach (TreeNode node in DrivesTreeView.Nodes[0].Nodes)
+                {
+                    if (node.Tag is BookmarkTag)
+                    {
+                        bookmarks.Add(node);
+                    }
+                }
+
+                DrivesTreeView.Nodes.Clear();
+            }
 
             TreeNode root = DrivesTreeView.Nodes.Add("Computer");
             root.Tag = new RootTag();
 
             string firstReadyDrivePath = null;
 
-            foreach (var drive in System.IO.DriveInfo.GetDrives())
+            foreach (var drive in DriveInfo.GetDrives())
             {
                 if (drive.IsReady)
                 {
@@ -131,6 +155,12 @@ namespace Ranger
 
                     AddDriveToTree(root, drive);
                 }
+            }
+
+            // Re-add the bookmarks
+            foreach (var bookmark in bookmarks)
+            {
+                root.Nodes.Add(bookmark);
             }
 
             root.Expand();
@@ -172,7 +202,7 @@ namespace Ranger
                 }
             }
 
-            foreach (var drive in System.IO.DriveInfo.GetDrives())
+            foreach (var drive in DriveInfo.GetDrives())
             {
                 if (drive.IsReady)
                 {
@@ -255,13 +285,29 @@ namespace Ranger
                 if (item.Tag is BookmarkDirectoryTag)
                 {
                     var tag = item.Tag as BookmarkDirectoryTag;
-                    m_config.SetValue($"bookmark{i}", $"D{tag.DisplayName}|{tag.Path}");
+                    m_config.SetValue($"bookmark{i}", $"Toolbar|Directory|{tag.DisplayName}|{tag.Path}");
                     i++;
                 }
                 else if(item.Tag is BookmarkFileTag)
                 {
                     var tag = item.Tag as BookmarkFileTag;
-                    m_config.SetValue($"bookmark{i}", $"F{tag.DisplayName}|{tag.Path}");
+                    m_config.SetValue($"bookmark{i}", $"Toolbar|File|{tag.DisplayName}|{tag.Path}");
+                    i++;
+                }
+            }
+
+            foreach (TreeNode item in DrivesTreeView.Nodes[0].Nodes)
+            {
+                if (item.Tag is BookmarkDirectoryTag)
+                {
+                    var tag = item.Tag as BookmarkDirectoryTag;
+                    m_config.SetValue($"bookmark{i}", $"Tree|Directory|{tag.DisplayName}|{tag.Path}");
+                    i++;
+                }
+                else if(item.Tag is BookmarkFileTag)
+                {
+                    var tag = item.Tag as BookmarkFileTag;
+                    m_config.SetValue($"bookmark{i}", $"Tree|File|{tag.DisplayName}|{tag.Path}");
                     i++;
                 }
             }
@@ -282,21 +328,16 @@ namespace Ranger
                 bookmark = m_config.GetValue($"bookmark{i}");
                 if (bookmark != null)
                 {
-                    string pathData = bookmark.Substring(1);
-                    int separatorIndex = pathData.IndexOf("|");
-                    if (separatorIndex != -1)
-                    {
-                        string displayName = pathData.Substring(0, separatorIndex);
-                        string path = pathData.Substring(separatorIndex + 1);
+                    string[] bookmarkData = bookmark.Split('|');
 
-                        if (bookmark.StartsWith("D"))
-                        {
-                            AddBookmark(path, displayName, BookmarkType.Directory);
-                        }
-                        if (bookmark.StartsWith("F"))
-                        {
-                            AddBookmark(path, displayName, BookmarkType.File);
-                        }
+                    if (bookmarkData.Length  == 4)
+                    {
+                        BookmarkContainer container = (bookmarkData[0] == "Tree") ? BookmarkContainer.TreeView : BookmarkContainer.Toolbar;
+                        BookmarkType type = (bookmarkData[1] == "File") ? BookmarkType.File : BookmarkType.Directory;
+                        string displayName = bookmarkData[2];
+                        string path = bookmarkData[3];
+
+                        AddBookmark(path, displayName, type, container);
                     }
                 }
 
@@ -366,30 +407,54 @@ namespace Ranger
             TreeViewHitTestInfo info = DrivesTreeView.HitTest(e.X, e.Y);
             if (info.Node != null)
             {
-                // If the selection is different we'll call the event handler anyway. Only need 
-                // to force the event handler call if the node is the same as the currently selected one.
-                if (DrivesTreeView.SelectedNode == info.Node)
+                if (e.Button == MouseButtons.Left)
                 {
-                    DrivesTreeView_AfterSelect(sender, new TreeViewEventArgs(info.Node));
+                    // If the selection is different we'll call the event handler anyway. Only need 
+                    // to force the event handler call if the node is the same as the currently selected one.
+                    if (DrivesTreeView.SelectedNode == info.Node)
+                    {
+                        DrivesTreeView_AfterSelect(sender, new TreeViewEventArgs(info.Node));
+                    }
+                }
+                else
+                {
+                    m_preventDirectoryChangeEventOnTreeNodeSelect = true;
+                    DrivesTreeView.SelectedNode = info.Node;
+                    m_preventDirectoryChangeEventOnTreeNodeSelect = false;
                 }
             }
         }
 
         private void DrivesTreeView_AfterSelect(object sender, TreeViewEventArgs e)
         {
-            string newDir = null;
-            if(e.Node.Tag is DirectoryTag)
+            if (!m_preventDirectoryChangeEventOnTreeNodeSelect)
             {
-                newDir = (e.Node.Tag as DirectoryTag).Path;
-            }
-            else if (e.Node.Tag is LazyDirectoryTag)
-            {
-                newDir = (e.Node.Tag as LazyDirectoryTag).Path;
-            }
+                string newDir = null;
+                string fileToSelect = null;
 
-            if (newDir != null)
-            {
-                m_activePane.SetDirectory(newDir);
+                if (e.Node.Tag is DirectoryTag)
+                {
+                    newDir = (e.Node.Tag as DirectoryTag).Path;
+                }
+                else if (e.Node.Tag is LazyDirectoryTag)
+                {
+                    newDir = (e.Node.Tag as LazyDirectoryTag).Path;
+                }
+                else if (e.Node.Tag is BookmarkDirectoryTag)
+                {
+                    newDir = (e.Node.Tag as BookmarkDirectoryTag).Path;
+                }
+                else if (e.Node.Tag is BookmarkFileTag)
+                {
+                    string path = (e.Node.Tag as BookmarkFileTag).Path;
+                    newDir = Path.GetDirectoryName(path);
+                    fileToSelect = Path.GetFileName(path);
+                }
+
+                if (newDir != null)
+                {
+                    m_activePane.SetDirectory(newDir, fileToSelect);
+                }
             }
         }
 
@@ -472,6 +537,11 @@ namespace Ranger
             Close();
         }
 
+        public static void TriggerDefaultEditorSelect()
+        {
+            s_instance?.SetDefaultEditorToolStripMenuItem_Click(null, null);
+        }
+
         private void SetDefaultEditorToolStripMenuItem_Click(object sender, EventArgs e)
         {
             SetEditorFileDialog.Title = "Set Default Editor";
@@ -500,21 +570,19 @@ namespace Ranger
             m_activePane.ParentDirectory();
         }
 
-        private void NavigationToolStrip_DragOver(object sender, DragEventArgs e)
+        private void BookmarkContainer_DragOver(object sender, DragEventArgs e)
         {
-            if (e.Data.GetDataPresent(typeof(ListView.SelectedListViewItemCollection)))
+            if (e.Data.GetDataPresent(typeof(ListView.SelectedListViewItemCollection)) ||
+                e.Data.GetDataPresent(DataFormats.FileDrop))
             {
-                e.Effect = e.AllowedEffect;
-            }
-            else if (e.Data.GetDataPresent(DataFormats.FileDrop))
-            {
-                e.Effect = e.AllowedEffect;
+                e.Effect = DragDropEffects.Link;
             }
         }
 
-        private void NavigationToolStrip_DragDrop(object sender, DragEventArgs e)
+        private void BookmarkContainer_DragDrop(object sender, DragEventArgs e)
         {
             List<string> pathsToAdd = new List<string>();
+            BookmarkContainer containerType = (sender == NavigationToolStrip) ? BookmarkContainer.Toolbar : BookmarkContainer.TreeView;
 
             if (e.Data.GetDataPresent(typeof(ListView.SelectedListViewItemCollection)))
             {
@@ -523,6 +591,7 @@ namespace Ranger
                     if (current.Tag is PathTag)
                     {
                         pathsToAdd.Add((current.Tag as PathTag).Path);
+                        break;  // Only add first
                     }
                 }
             }
@@ -531,6 +600,7 @@ namespace Ranger
                 foreach (var file in (string[])e.Data.GetData(DataFormats.FileDrop))
                 {
                     pathsToAdd.Add(file);
+                    break;  // Only add first
                 }
             }
 
@@ -538,16 +608,18 @@ namespace Ranger
             {
                 if (Directory.Exists(path))
                 {
-                    AddBookmark(path, Path.GetFileName(path), BookmarkType.Directory);
+                    AddBookmark(path, Path.GetFileName(path), BookmarkType.Directory, containerType);
+                    break;  // Only add first
                 }
                 else if (File.Exists(path))
                 {
-                    AddBookmark(path, Path.GetFileName(path), BookmarkType.File);
+                    AddBookmark(path, Path.GetFileName(path), BookmarkType.File, containerType);
+                    break;  // Only add first
                 }
             }
         }
 
-        private void AddBookmark(string path, string displayName, BookmarkType type)
+        private void AddBookmark(string path, string displayName, BookmarkType type, BookmarkContainer container)
         {
             int imageIndex = 0;
             BookmarkTag tag = null;
@@ -567,19 +639,32 @@ namespace Ranger
             {
                 tag.DisplayName = displayName;
 
-                var item = new ToolStripButtonWithContextMenu()
+                if (container == BookmarkContainer.Toolbar)
                 {
-                    Text = displayName,
-                    Image = m_smallImageList.Images[imageIndex],
-                    TextImageRelation = TextImageRelation.ImageAboveText,
-                    Tag = tag,
-                    ContextMenuStrip = BookmarksContextMenuStrip,
-                    Font = BackToolStripButton.Font
-                };
+                    var item = new ToolStripButtonWithContextMenu()
+                    {
+                        Text = displayName,
+                        Image = m_smallImageList.Images[imageIndex],
+                        TextImageRelation = TextImageRelation.ImageAboveText,
+                        Tag = tag,
+                        ContextMenuStrip = BookmarksContextMenuStrip,
+                        Font = BackToolStripButton.Font,
+                        ToolTipText = (tag as BookmarkTag).Path
+                    };
 
-                item.Click += Bookmark_Click;
+                    item.Click += Bookmark_Click;
 
-                NavigationToolStrip.Items.Add(item);
+                    NavigationToolStrip.Items.Add(item);
+                }
+                else if (container == BookmarkContainer.TreeView) 
+                {
+                    TreeNode item = new TreeNode(displayName);
+                    item.ImageIndex = item.SelectedImageIndex = imageIndex;
+                    item.Tag = tag;
+                    item.ToolTipText = (tag as BookmarkTag).Path;
+
+                    DrivesTreeView.Nodes[0].Nodes.Add(item);
+                }
             }
         }
 
@@ -602,18 +687,35 @@ namespace Ranger
             }
         }
 
-        private ToolStripButtonWithContextMenu BookmarkButtonFromContextClick(object sender)
+        private BookmarkTag BookmarkButtonFromContextClick(object sender, out object UIItem)
         {
-            // The menu item will be the child of a ContextMenu that has a tag of type ToolStripButtonWithContextMenu.
-            ToolStripItem item = sender as ToolStripItem;
-            if (item != null)
+            UIItem = null;
+
+            if (sender is ToolStripMenuItem)
             {
-                ContextMenuStrip contextMenu = item.Owner as ContextMenuStrip;
-                if (contextMenu != null)
+                // The menu item will be the child of a ContextMenu that has a tag of type ToolStripButtonWithContextMenu.
+                ToolStripItem item = sender as ToolStripItem;
+                if (item != null)
                 {
-                    if (contextMenu.Tag is ToolStripButtonWithContextMenu)
+                    ContextMenuStrip contextMenu = item.Owner as ContextMenuStrip;
+                    if (contextMenu != null)
                     {
-                        return contextMenu.Tag as ToolStripButtonWithContextMenu;
+                        if (contextMenu.Tag is ToolStripButtonWithContextMenu)
+                        {
+                            var button = contextMenu.Tag as ToolStripButtonWithContextMenu;
+
+                            UIItem = button;
+                            return button.Tag as BookmarkTag;
+                        }
+                        else if (contextMenu.SourceControl is TreeView)
+                        {
+                            TreeView tree = contextMenu.SourceControl as TreeView;
+                            if (tree.SelectedNode.Tag is BookmarkTag)
+                            {
+                                UIItem = tree.SelectedNode;
+                                return tree.SelectedNode.Tag as BookmarkTag;
+                            }
+                        }
                     }
                 }
             }
@@ -623,33 +725,75 @@ namespace Ranger
 
         private void DeleteBookmark_Click(object sender, EventArgs e)
         {
-            var bookmarkButton = BookmarkButtonFromContextClick(sender);
-            if (bookmarkButton != null)
+            var bookmarkTag = BookmarkButtonFromContextClick(sender, out object UIItem);
+            if (bookmarkTag != null)
             {
                 if (MessageBox.Show($"Are you sure you want to delete this bookmark?",
                                     "Delete Bookmark",
                                     MessageBoxButtons.YesNo,
                                     MessageBoxIcon.Question) == DialogResult.Yes)
                 {
-                    NavigationToolStrip.Items.Remove(bookmarkButton);
+                    if (UIItem is ToolStripButtonWithContextMenu)
+                    {
+                        NavigationToolStrip.Items.Remove(UIItem as ToolStripButtonWithContextMenu);
+                    }
+                    else if(UIItem is TreeNode)
+                    {
+                        // Remove from tree
+                        DrivesTreeView.Nodes[0].Nodes.Remove(UIItem as TreeNode);
+                    }
                 }
             }
         }
 
         private void RenameToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            var bookmarkButton = BookmarkButtonFromContextClick(sender);
-            if (bookmarkButton != null)
+            var bookmarkTag = BookmarkButtonFromContextClick(sender, out object UIItem);
+            if (bookmarkTag != null)
             {
-                var bookmarkTag = (bookmarkButton.Tag as BookmarkTag);
                 var form = new RenameBookmarkForm(bookmarkTag.DisplayName);
 
                 if (form.ShowDialog(this) == DialogResult.OK)
                 {
-                    (bookmarkButton.Tag as BookmarkTag).DisplayName = form.DisplayName;
-                    bookmarkButton.Text = form.DisplayName;
+                    bookmarkTag.DisplayName = form.DisplayName;
+
+                    if (UIItem is ToolStripButtonWithContextMenu)
+                    {
+                        (UIItem as ToolStripButtonWithContextMenu).Text = form.DisplayName;
+                    }
+                    else if(UIItem is TreeNode)
+                    {
+                        (UIItem as TreeNode).Text = form.DisplayName;
+                    }
                 }
             }
+        }
+
+        private void AddCurrentDirectoryToToolstripToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            string displayName = Path.GetFileName(m_activePane.CurrentPath.TrimEnd(new char[] { '\\' }));
+            AddBookmark(m_activePane.CurrentPath, displayName, BookmarkType.Directory, BookmarkContainer.Toolbar);
+        }
+
+        private void AddCurrentDirectoryToTreeToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            string displayName = Path.GetFileName(m_activePane.CurrentPath.TrimEnd(new char[] { '\\' }));
+            AddBookmark(m_activePane.CurrentPath, displayName, BookmarkType.Directory, BookmarkContainer.TreeView);
+        }
+
+        private void BookmarksContextMenuStrip_Opening(object sender, System.ComponentModel.CancelEventArgs e)
+        {
+            ContextMenuStrip contextMenu = sender as ContextMenuStrip;
+
+            if(contextMenu != null && contextMenu.SourceControl is TreeView)
+            {
+                var tree = (contextMenu.SourceControl as TreeView);
+                if (tree.SelectedNode?.Tag as BookmarkTag == null)
+                {
+                    e.Cancel = true;
+                }
+            }
+
         }
     }
 }

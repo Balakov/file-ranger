@@ -443,26 +443,7 @@ namespace Ranger
             FileListView.ResumeLayout();
 
             // Fix up the multi-part link label
-
-            PathLinkLabel.Text = directory;
-            PathLinkLabel.Links.Clear();
-
-            int indexStart = directory.StartsWith(@"\\") ? 2 : 0;   // Skip the start of UNC paths
-            int indexEnd = directory.IndexOf(Path.DirectorySeparatorChar, indexStart);
-            while(indexEnd != -1)
-            {
-                PathLinkLabel.Links.Add(indexStart, indexEnd - indexStart, directory.Substring(0, indexEnd));
-                indexStart = indexEnd+1;
-                indexEnd = directory.IndexOf(Path.DirectorySeparatorChar, indexStart);
-
-                // Add the last path of the path
-                if(indexEnd == -1)
-                {
-                    PathLinkLabel.Links.Add(indexStart, directory.Length-indexStart, directory);
-                }
-            }
-
-            PathLinkLabel.TabStop = false;
+            BuildBreadcrumbs(directory);
 
             try
             {
@@ -491,52 +472,108 @@ namespace Ranger
             return true;
         }
 
-        private DateTime m_lastStatusBarUpdateTime = DateTime.MinValue;
+        private void BuildBreadcrumbs(string directory)
+        {
+            string[] parts;
+            if (directory.StartsWith(@"\\"))
+            {
+                parts = directory.Substring(2).Split(new char[] { Path.DirectorySeparatorChar }, StringSplitOptions.RemoveEmptyEntries);
+                parts[0] = @"\\" + parts[0];
+            }
+            else
+            {
+                parts = directory.Split(new char[] { Path.DirectorySeparatorChar }, StringSplitOptions.RemoveEmptyEntries);
+            }
+
+            int ignoreIndex = 0;
+            Size stringSize;
+            int maxWidth = PathLinkLabel.Width - 10;
+
+            do
+            {
+                PathLinkLabel.Links.Clear();
+
+                string fullPath = parts[0];
+                string fullLinkPath = parts[0];
+                PathLinkLabel.Links.Add(0, fullPath.Length, fullLinkPath);
+
+                for (int i = 1; i < parts.Length; i++)
+                {
+                    int currentStartIndex = fullPath.Length + 1;    // +1 for '\' we're about to add.
+                    fullLinkPath += Path.DirectorySeparatorChar + parts[i];
+
+                    if (i > ignoreIndex)
+                    {
+                        fullPath += Path.DirectorySeparatorChar + parts[i];
+                        PathLinkLabel.Links.Add(currentStartIndex, parts[i].Length, fullLinkPath);
+                    }
+                    else
+                    {
+                        fullPath += Path.DirectorySeparatorChar + "...";
+                    }
+                }
+
+                stringSize = TextRenderer.MeasureText(fullPath, PathLinkLabel.Font);
+                if (stringSize.Width > maxWidth)
+                {
+                    if (ignoreIndex < parts.Length - 2) // Keep the first and last parts and rely on the LinkLabel to add ellipsis at the end.
+                    {
+                        ignoreIndex++;
+                    }
+                    else
+                    {
+                        // We can't ignore any more, we'll just have to go with what we have
+                        PathLinkLabel.Text = fullPath;
+                        stringSize.Width = int.MinValue;
+                    }
+                }
+                else
+                {
+                    PathLinkLabel.Text = fullPath;
+                }
+
+            } while (stringSize.Width > maxWidth);
+
+            PathLinkLabel.TabStop = false;
+        }
 
         private void UpdateStatusBar()
         {
-            TimeSpan timeSinceLastUpdate = (DateTime.UtcNow - m_lastStatusBarUpdateTime);
+            DriveSpaceStatusLabel.Text = string.Format("Free Space: {0:N0} bytes", m_currentDriveFreeSpace);
 
-            //if (timeSinceLastUpdate.TotalMilliseconds > 100)
+            int fileCount = 0;
+            int directoryCount = 0;
+            long totalSelectedFileSize = 0;
+            foreach (ListViewItem lvi in FileListView.SelectedItems)
             {
-                m_lastStatusBarUpdateTime = DateTime.UtcNow;
-
-                DriveSpaceStatusLabel.Text = string.Format("Free Space: {0:N0} bytes", m_currentDriveFreeSpace);
-
-                int fileCount = 0;
-                int directoryCount = 0;
-                long totalSelectedFileSize = 0;
-                foreach (ListViewItem lvi in FileListView.SelectedItems)
+                if (lvi.Tag is FileTag)
                 {
-                    if (lvi.Tag is FileTag)
-                    {
-                        fileCount++;
-                        totalSelectedFileSize += (lvi.Tag as FileTag).FileInfo?.Length ?? 0;
-                    }
-                    else if (lvi.Tag is DirectoryTag)
-                    {
-                        directoryCount++;
-                    }
+                    fileCount++;
+                    totalSelectedFileSize += (lvi.Tag as FileTag).FileInfo?.Length ?? 0;
                 }
-
-                string fileText = string.Empty;
-                if (fileCount > 0)
+                else if (lvi.Tag is DirectoryTag)
                 {
-                    string filePluralText = fileCount == 1 ? "file" : "files";
-                    string sumText = fileCount == 1 ? "of" : "totalling";
-                    string bytesText = totalSelectedFileSize == 1 ? "byte" : "bytes";
-
-                    fileText = $"{fileCount} {filePluralText} {sumText} {totalSelectedFileSize:N0} {bytesText}";
+                    directoryCount++;
                 }
-
-                string folderText = string.Empty;
-                if (directoryCount > 0)
-                {
-                    folderText = directoryCount == 1 ? "1 folder" : $"{directoryCount} folders";
-                }
-
-                SelectionStatusLabel.Text = (fileCount > 0 || directoryCount > 0) ? string.Format($"Selected: {folderText} {fileText}") : "";
             }
+
+            string fileText = string.Empty;
+            if (fileCount > 0)
+            {
+                string filePluralText = fileCount == 1 ? "file" : "files";
+                string sumText = fileCount == 1 ? "of" : "totalling";
+                string bytesText = totalSelectedFileSize == 1 ? "byte" : "bytes";
+
+                fileText = $"{fileCount} {filePluralText} {sumText} {totalSelectedFileSize:N0} {bytesText}";
+            }
+
+            string folderText = string.Empty;
+            if (directoryCount > 0)
+            {
+                folderText = directoryCount == 1 ? "1 folder" : $"{directoryCount} folders";
+            }
+
+            SelectionStatusLabel.Text = (fileCount > 0 || directoryCount > 0) ? string.Format($"Selected: {folderText} {fileText}") : "";
         }
 
         private static string AttribsToString(FileAttributes attribs)
@@ -597,7 +634,7 @@ namespace Ranger
 
         private void FileListView_ItemDrag(object sender, ItemDragEventArgs e)
         {
-            FileListView.DoDragDrop(FileListView.SelectedItems, DragDropEffects.Copy | DragDropEffects.Move);
+            FileListView.DoDragDrop(FileListView.SelectedItems, DragDropEffects.Copy | DragDropEffects.Move | DragDropEffects.Link);
         }
 
         private void FileListView_DragOver(object sender, DragEventArgs e)
@@ -1098,9 +1135,6 @@ namespace Ranger
 
         private void FilePaneContextMenuStrip_Opening(object sender, CancelEventArgs e)
         {
-            // If we're over blank space or a folder, don't allow "Edit"
-            EditToolStripMenuItem.Enabled = RangerMainForm.DefaultEditorPath != null && File.Exists(RangerMainForm.DefaultEditorPath);
-
             // Only allow copy if we have selected paths
             bool filesSelected = FileListView.SelectedItems.Count > 0;
             copyToolStripMenuItem.Enabled = filesSelected;
@@ -1110,6 +1144,11 @@ namespace Ranger
 
         private void EditToolStripMenuItem_Click(object sender, EventArgs e)
         {
+            if (RangerMainForm.DefaultEditorPath != null && File.Exists(RangerMainForm.DefaultEditorPath))
+            {
+                RangerMainForm.TriggerDefaultEditorSelect();
+            }
+
             if (RangerMainForm.DefaultEditorPath != null && File.Exists(RangerMainForm.DefaultEditorPath))
             {
                 List<string> selectedPaths = new List<string>();
