@@ -10,19 +10,18 @@ namespace Ranger
 {
     public partial class RangerMainForm : Form
     {
-        private ImageList m_smallImageList = new ImageList();
-        private ImageList m_largeImageList = new ImageList();
+        private readonly ImageList m_smallImageList = new ImageList();
+        private readonly ImageList m_largeImageList = new ImageList();
         private IconListManager m_iconListManager;
-        //private Etier.IconHelper.IconListManager m_iconListManager;
 
         private FilePane m_activePane = null;
-        ManagementEventWatcher m_driveWatcher = new ManagementEventWatcher();
+        private readonly ManagementEventWatcher m_driveWatcher = new ManagementEventWatcher();
 
         private ViewFilter.ViewMask m_viewMask = 0;
 
         public static string DefaultEditorPath { get; private set; }
 
-        private Config m_config = new Config();
+        private readonly Config m_config = new Config();
         private static RangerMainForm s_instance = null;
 
         private bool m_preventDirectoryChangeEventOnTreeNodeSelect = false;
@@ -125,6 +124,73 @@ namespace Ranger
             this.Closing += new System.ComponentModel.CancelEventHandler(this.MyOnClosing);
         }
 
+        private void MyOnClosing(object o, System.ComponentModel.CancelEventArgs e)
+        {
+            m_driveWatcher.Stop();
+
+            m_config.Clear();
+
+            if (this.WindowState != FormWindowState.Minimized)
+            {
+                m_config.SetValue("maximised", (this.WindowState == FormWindowState.Minimized).ToString());
+                m_config.SetValue("xpos", this.Location.X.ToString());
+                m_config.SetValue("ypos", this.Location.Y.ToString());
+                m_config.SetValue("width", this.Size.Width.ToString());
+                m_config.SetValue("height", this.Size.Height.ToString());
+            }
+
+            m_config.SetValue("treeviewsplitterdistance", FilePaneSplitContainer.SplitterDistance.ToString());
+
+            m_config.SetValue("leftpath", LeftFilePane.CurrentPath);
+            m_config.SetValue("rightpath", RightFilePane.CurrentPath);
+
+            m_config.SetValue("showhiddenfiles", m_viewMask.HasFlag(ViewFilter.ViewMask.ShowHidden).ToString());
+            m_config.SetValue("showsystemfiles", m_viewMask.HasFlag(ViewFilter.ViewMask.ShowSystem).ToString());
+
+            if (DefaultEditorPath != null)
+            {
+                m_config.SetValue("defaulteditorpath", DefaultEditorPath);
+            }
+
+            int i = 0;
+            foreach (ToolStripItem item in NavigationToolStrip.Items)
+            {
+                if (item.Tag is BookmarkDirectoryTag)
+                {
+                    var tag = item.Tag as BookmarkDirectoryTag;
+                    m_config.SetValue($"bookmark{i}", $"Toolbar|Directory|{tag.DisplayName}|{tag.Path}");
+                    i++;
+                }
+                else if (item.Tag is BookmarkFileTag)
+                {
+                    var tag = item.Tag as BookmarkFileTag;
+                    m_config.SetValue($"bookmark{i}", $"Toolbar|File|{tag.DisplayName}|{tag.Path}");
+                    i++;
+                }
+            }
+
+            foreach (TreeNode item in DrivesTreeView.Nodes[0].Nodes)
+            {
+                if (item.Tag is BookmarkDirectoryTag)
+                {
+                    var tag = item.Tag as BookmarkDirectoryTag;
+                    m_config.SetValue($"bookmark{i}", $"Tree|Directory|{tag.DisplayName}|{tag.Path}");
+                    i++;
+                }
+                else if (item.Tag is BookmarkFileTag)
+                {
+                    var tag = item.Tag as BookmarkFileTag;
+                    m_config.SetValue($"bookmark{i}", $"Tree|File|{tag.DisplayName}|{tag.Path}");
+                    i++;
+                }
+            }
+
+            LeftFilePane.SaveToConfig(m_config, "left_");
+            RightFilePane.SaveToConfig(m_config, "right_");
+
+            m_config.Save();
+        }
+
         private string BuildDrivesTreeView()
         {
             DrivesTreeView.BeginUpdate();
@@ -176,8 +242,11 @@ namespace Ranger
         {
             int folderIconIndex = m_iconListManager.AddDriveIcon(drive.RootDirectory.FullName, false);
 
-            TreeNode node = new TreeNode($"{drive.Name} ({drive.VolumeLabel})", folderIconIndex, folderIconIndex);
-            node.Tag = new LazyDirectoryTag(drive.RootDirectory.FullName);
+            TreeNode node = new TreeNode($"{drive.Name} ({drive.VolumeLabel})", folderIconIndex, folderIconIndex)
+            {
+                Tag = new LazyDirectoryTag(drive.RootDirectory.FullName)
+            };
+
             node.Nodes.Add("Dummy");// Enable the "Expand" icon
 
             root.Nodes.Add(node);
@@ -253,71 +322,6 @@ namespace Ranger
             {
                 UpdateDrivesTreeView();
             }
-        }
-
-        private void MyOnClosing(object o, System.ComponentModel.CancelEventArgs e)
-        {
-            m_config.Clear();
-
-            if (this.WindowState != FormWindowState.Minimized)
-            {
-                m_config.SetValue("maximised", (this.WindowState == FormWindowState.Minimized).ToString());
-                m_config.SetValue("xpos", this.Location.X.ToString());
-                m_config.SetValue("ypos", this.Location.Y.ToString());
-                m_config.SetValue("width", this.Size.Width.ToString());
-                m_config.SetValue("height", this.Size.Height.ToString());
-            }
-
-            m_config.SetValue("treeviewsplitterdistance", FilePaneSplitContainer.SplitterDistance.ToString());
-
-            m_config.SetValue("leftpath", LeftFilePane.CurrentPath);
-            m_config.SetValue("rightpath", RightFilePane.CurrentPath);
-
-            m_config.SetValue("showhiddenfiles", m_viewMask.HasFlag(ViewFilter.ViewMask.ShowHidden).ToString());
-            m_config.SetValue("showsystemfiles", m_viewMask.HasFlag(ViewFilter.ViewMask.ShowSystem).ToString());
-
-            if (DefaultEditorPath != null)
-            {
-                m_config.SetValue("defaulteditorpath", DefaultEditorPath);
-            }
-
-            int i = 0;
-            foreach (ToolStripItem item in NavigationToolStrip.Items)
-            {
-                if (item.Tag is BookmarkDirectoryTag)
-                {
-                    var tag = item.Tag as BookmarkDirectoryTag;
-                    m_config.SetValue($"bookmark{i}", $"Toolbar|Directory|{tag.DisplayName}|{tag.Path}");
-                    i++;
-                }
-                else if(item.Tag is BookmarkFileTag)
-                {
-                    var tag = item.Tag as BookmarkFileTag;
-                    m_config.SetValue($"bookmark{i}", $"Toolbar|File|{tag.DisplayName}|{tag.Path}");
-                    i++;
-                }
-            }
-
-            foreach (TreeNode item in DrivesTreeView.Nodes[0].Nodes)
-            {
-                if (item.Tag is BookmarkDirectoryTag)
-                {
-                    var tag = item.Tag as BookmarkDirectoryTag;
-                    m_config.SetValue($"bookmark{i}", $"Tree|Directory|{tag.DisplayName}|{tag.Path}");
-                    i++;
-                }
-                else if(item.Tag is BookmarkFileTag)
-                {
-                    var tag = item.Tag as BookmarkFileTag;
-                    m_config.SetValue($"bookmark{i}", $"Tree|File|{tag.DisplayName}|{tag.Path}");
-                    i++;
-                }
-            }
-
-            LeftFilePane.SaveToConfig(m_config, "left_");
-            RightFilePane.SaveToConfig(m_config, "right_");
-
-            m_config.Save();
         }
 
         private void SetBookmarksFromConfig()
@@ -486,8 +490,7 @@ namespace Ranger
                         {
                             DirectoryInfo di = new DirectoryInfo(dir);
 
-                            Color itemColour;
-                            if (ViewFilter.FilterViewByAttributes(di.Attributes, m_viewMask, out itemColour))
+                            if (ViewFilter.FilterViewByAttributes(di.Attributes, m_viewMask, out Color itemColour))
                             {
                                 int folderIconIndex = m_iconListManager.AddFolderIcon(dir, false);
 
@@ -672,8 +675,7 @@ namespace Ranger
 
         private void Bookmark_Click(object sender, EventArgs e)
         {
-            ToolStripItem item = sender as ToolStripItem;
-            if (item != null)
+            if (sender is ToolStripItem item)
             {
                 if (item.Tag is BookmarkFileTag)
                 {
@@ -693,30 +695,25 @@ namespace Ranger
         {
             UIItem = null;
 
-            if (sender is ToolStripMenuItem)
+            // The menu item will be the child of a ContextMenu that has a tag of type ToolStripButtonWithContextMenu.
+            if (sender is ToolStripItem item)
             {
-                // The menu item will be the child of a ContextMenu that has a tag of type ToolStripButtonWithContextMenu.
-                ToolStripItem item = sender as ToolStripItem;
-                if (item != null)
+                if (item.Owner is ContextMenuStrip contextMenu)
                 {
-                    ContextMenuStrip contextMenu = item.Owner as ContextMenuStrip;
-                    if (contextMenu != null)
+                    if (contextMenu.Tag is ToolStripButtonWithContextMenu)
                     {
-                        if (contextMenu.Tag is ToolStripButtonWithContextMenu)
-                        {
-                            var button = contextMenu.Tag as ToolStripButtonWithContextMenu;
+                        var button = contextMenu.Tag as ToolStripButtonWithContextMenu;
 
-                            UIItem = button;
-                            return button.Tag as BookmarkTag;
-                        }
-                        else if (contextMenu.SourceControl is TreeView)
+                        UIItem = button;
+                        return button.Tag as BookmarkTag;
+                    }
+                    else if (contextMenu.SourceControl is TreeView)
+                    {
+                        TreeView tree = contextMenu.SourceControl as TreeView;
+                        if (tree.SelectedNode.Tag is BookmarkTag)
                         {
-                            TreeView tree = contextMenu.SourceControl as TreeView;
-                            if (tree.SelectedNode.Tag is BookmarkTag)
-                            {
-                                UIItem = tree.SelectedNode;
-                                return tree.SelectedNode.Tag as BookmarkTag;
-                            }
+                            UIItem = tree.SelectedNode;
+                            return tree.SelectedNode.Tag as BookmarkTag;
                         }
                     }
                 }
@@ -785,9 +782,7 @@ namespace Ranger
 
         private void BookmarksContextMenuStrip_Opening(object sender, System.ComponentModel.CancelEventArgs e)
         {
-            ContextMenuStrip contextMenu = sender as ContextMenuStrip;
-
-            if(contextMenu != null && contextMenu.SourceControl is TreeView)
+            if(sender is ContextMenuStrip contextMenu && contextMenu.SourceControl is TreeView)
             {
                 var tree = (contextMenu.SourceControl as TreeView);
                 if (tree.SelectedNode?.Tag as BookmarkTag == null)

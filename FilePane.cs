@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 using System.Windows.Forms;
 using System.IO;
 using System.Collections.Specialized;
+using Microsoft.Win32;
 
 namespace Ranger
 {
@@ -48,7 +49,7 @@ namespace Ranger
         public event EventHandler OnPathChangedEvent;
         public event EventHandler OnSyncronisationRequested;
 
-        private FileSystemWatcher m_fileWatcher = new FileSystemWatcher();
+        private readonly FileSystemWatcher m_fileWatcher = new FileSystemWatcher();
 
         //public Etier.IconHelper.IconListManager IconListManager { private get; set; }
         public IconListManager IconListManager { private get; set; }
@@ -58,7 +59,7 @@ namespace Ranger
         private string m_pendingPathToEdit = null;
         private string m_pendingPathToSelect = null;
 
-        private PathHistory m_history = new PathHistory();
+        private readonly PathHistory m_history = new PathHistory();
 
         public FilePane()
         {
@@ -181,13 +182,13 @@ namespace Ranger
                 m_pendingPathToSelect = null;
             }
 
-            AddPathsToView(filesToAdd, directoriesToAdd, pathToSelect, out ListViewItem dummy);
+            AddPathsToView(filesToAdd, directoriesToAdd, pathToSelect, out ListViewItem dummy, false);
 
             FileListView.EndUpdate();
             FileListView.ResumeLayout();
         }
 
-        private void AddPathsToView(IEnumerable<string> files, IEnumerable<string> subdirectories, string pathToSelect, out ListViewItem firstSelected)
+        private void AddPathsToView(IEnumerable<string> files, IEnumerable<string> subdirectories, string pathToSelect, out ListViewItem firstSelected, bool addParentDirDots)
         {
             firstSelected = null;
 
@@ -218,6 +219,18 @@ namespace Ranger
                         case SortStyle.DateDescending:
                             directoryInfos.Sort((a, b) => { return b.LastWriteTime.CompareTo(a.LastWriteTime); });
                             break;
+                    }
+
+                    if (addParentDirDots)
+                    {
+                        int folderIconIndex = IconListManager.AddFolderIcon(CurrentPath, false);
+                        string[] parts = CurrentPath.TrimEnd(new char[] { Path.DirectorySeparatorChar }).Split(Path.DirectorySeparatorChar);
+                        string parentPath = string.Join(Path.DirectorySeparatorChar.ToString(), parts, 0, parts.Length - 1);
+
+                        FileListView.Items.Add(new ListViewItem(new string[] { "..", string.Empty, string.Empty, string.Empty }, folderIconIndex)
+                        {
+                            Tag = new DirectoryTag(parentPath)
+                        });
                     }
 
                     foreach (var di in directoryInfos)
@@ -424,14 +437,14 @@ namespace Ranger
                         }
                     }
 
-                    AddPathsToView(new string[0], sharePaths, pathToSelect, out firstSelected);
+                    AddPathsToView(new string[0], sharePaths, pathToSelect, out firstSelected, false);
                 }
                 else
                 {
                     string[] directories = Directory.GetDirectories(directory, "*", SearchOption.TopDirectoryOnly);
                     string[] files = Directory.GetFiles(directory, "*", SearchOption.TopDirectoryOnly);
 
-                    AddPathsToView(files, directories, pathToSelect, out firstSelected);
+                    AddPathsToView(files, directories, pathToSelect, out firstSelected, !isRootUNCPath);
                 }
             }
             catch(Exception e)
@@ -488,7 +501,7 @@ namespace Ranger
 
             int ignoreIndex = 0;
             Size stringSize;
-            int maxWidth = PathLinkLabel.Width - 10;
+            int maxWidth = PathLinkLabel.Width - 30;
 
             do
             {
@@ -744,7 +757,7 @@ namespace Ranger
 
             // Find the common root
             string[] firstPathSplit = null;
-            string commonRoot = null;
+            string commonRoot;
 
             int lowestMatchIndex = int.MaxValue;
             foreach (string path in paths)
@@ -1137,16 +1150,65 @@ namespace Ranger
 
         private void FilePaneContextMenuStrip_Opening(object sender, CancelEventArgs e)
         {
+            openWithToolStripMenuItem.DropDownItems.Clear();
+
             // Only allow copy if we have selected paths
             bool filesSelected = FileListView.SelectedItems.Count > 0;
             copyToolStripMenuItem.Enabled = filesSelected;
             cutToolStripMenuItem.Enabled = filesSelected;
             propertiesToolStripMenuItem.Enabled = FileListView.SelectedItems.Count == 1;
+
+            if (filesSelected)
+            {
+                if (FileListView.SelectedItems[0].Tag is FileTag fileTag)
+                {
+                    string extension = Path.GetExtension(fileTag.Path);
+                    IEnumerable<FileOperations.RegisteredHandler> handlers = FileOperations.GetRegisteredExtensionHandlers(extension);
+                    foreach (var handler in handlers)
+                    {
+                        ToolStripMenuItem item = new ToolStripMenuItem(handler.Name);
+                        item.Tag = handler.Command;
+                        item.Click += OnOpenWithClick;
+                        openWithToolStripMenuItem.DropDownItems.Add(item);
+                    }
+                }
+            }
+
+            openWithToolStripMenuItem.Enabled = openWithToolStripMenuItem.HasDropDownItems;
+        }
+
+        private void OnOpenWithClick(object sender, EventArgs e)
+        {
+            if (sender is ToolStripMenuItem menuItem && menuItem.Tag is string handler)
+            {
+                if (FileListView.SelectedItems[0].Tag is FileTag fileTag)
+                {
+                    string pathToRun = handler.Replace("%1", fileTag.Path);
+                    string exe;
+                    string args;
+
+                    if (pathToRun.StartsWith("\""))
+                    {
+                        int endQuote = pathToRun.IndexOf("\"", 1);
+                        exe = pathToRun.Substring(1, endQuote-1);
+                        args = pathToRun.Substring(endQuote+1);
+                    }
+                    else
+                    {
+                        string[] pathParts = pathToRun.Split();
+                        exe = pathParts[0];
+                        args = string.Join(" ", pathParts, 1, pathParts.Length - 1);
+                    }
+
+                    Console.WriteLine($"Handler exe:{exe} with args:{args}");
+                    FileOperations.ExecuteFile(exe, args);
+                }
+            }
         }
 
         private void EditToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            if (RangerMainForm.DefaultEditorPath != null && File.Exists(RangerMainForm.DefaultEditorPath))
+            if (RangerMainForm.DefaultEditorPath == null || !File.Exists(RangerMainForm.DefaultEditorPath))
             {
                 RangerMainForm.TriggerDefaultEditorSelect();
             }

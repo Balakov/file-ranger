@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
@@ -106,7 +107,7 @@ namespace Ranger
             {
                 success = !lpFileOp.fAnyOperationsAborted;
             }
-            
+
             return success;
         }
 
@@ -172,11 +173,17 @@ namespace Ranger
             {
                 FileName = path,
                 Arguments = args,
-                WorkingDirectory = System.IO.Path.GetDirectoryName(path),
+                WorkingDirectory = Path.GetDirectoryName(path),
                 UseShellExecute = true
             };
 
-            System.Diagnostics.Process.Start(si);
+            try
+            {
+                System.Diagnostics.Process.Start(si);
+            }
+            catch
+            {
+            }
         }
 
         [DllImport("kernel32.dll", SetLastError = true, CharSet = CharSet.Auto)]
@@ -195,7 +202,7 @@ namespace Ranger
                 path += @"\";
             }
 
-            if (GetDiskFreeSpaceEx(path, out ulong freeBytes,  out ulong dummy1,  out ulong dummy2))
+            if (GetDiskFreeSpaceEx(path, out ulong freeBytes, out ulong dummy1, out ulong dummy2))
             {
                 return freeBytes;
             }
@@ -244,6 +251,42 @@ namespace Ranger
             info.nShow = SW_SHOW;
             info.fMask = SEE_MASK_INVOKEIDLIST;
             return ShellExecuteEx(ref info);
+        }
+
+        public class RegisteredHandler
+        {
+            public string Name;
+            public string Command;
+        }
+
+        public static IEnumerable<RegisteredHandler> GetRegisteredExtensionHandlers(string extension)
+        {
+            List<RegisteredHandler> registeredHandlers = new List<RegisteredHandler>();
+
+            using (var key = Microsoft.Win32.Registry.ClassesRoot.OpenSubKey(Path.Combine(extension, "OpenWithProgIDs")))
+            {
+                if (key != null)
+                {
+                    string[] handlers = key.GetValueNames();
+                    foreach (string handler in handlers)
+                    {
+                        string handlerPath = Path.Combine(handler, "shell", "open", "command");
+                        using (var handlerKey = Microsoft.Win32.Registry.ClassesRoot.OpenSubKey(handlerPath))
+                        {
+                            if (handlerKey != null)
+                            {
+                                var defaultValue = handlerKey.GetValue(null);
+                                if (defaultValue != null)
+                                {
+                                    registeredHandlers.Add(new RegisteredHandler() { Name = handler, Command = defaultValue.ToString() });
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            return registeredHandlers;
         }
 
     }
