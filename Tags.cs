@@ -16,6 +16,11 @@ namespace Ranger
         public PathTag(string path) { Path = path; }
     }
 
+    public class ParentDirectoryTag : DirectoryTag
+    {
+        public ParentDirectoryTag(string path) : base(path) { }
+    }
+
     public class DirectoryTag : PathTag
     {
         public DirectoryTag(string path) : base(path) { }

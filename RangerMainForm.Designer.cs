@@ -49,15 +49,15 @@
             this.viewToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.showHiddenFilesToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.showSystemFilesToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.FilePaneSplitContainer = new System.Windows.Forms.SplitContainer();
-            this.DrivesTreeView = new System.Windows.Forms.TreeView();
-            this.splitContainer3 = new System.Windows.Forms.SplitContainer();
-            this.SetEditorFileDialog = new System.Windows.Forms.OpenFileDialog();
-            this.LeftFilePane = new Ranger.FilePane();
-            this.RightFilePane = new Ranger.FilePane();
             this.bookmarksToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.addCurrentDirectoryToToolstripToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.addCurrentDirectoryToTreeToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.FilePaneSplitContainer = new System.Windows.Forms.SplitContainer();
+            this.DrivesTreeView = new System.Windows.Forms.TreeView();
+            this.splitContainer3 = new System.Windows.Forms.SplitContainer();
+            this.LeftFilePane = new Ranger.FilePane();
+            this.RightFilePane = new Ranger.FilePane();
+            this.SetEditorFileDialog = new System.Windows.Forms.OpenFileDialog();
             ((System.ComponentModel.ISupportInitialize)(this.MainSplitContainer)).BeginInit();
             this.MainSplitContainer.Panel1.SuspendLayout();
             this.MainSplitContainer.Panel2.SuspendLayout();
@@ -107,6 +107,7 @@
             this.PathTextBox.Name = "PathTextBox";
             this.PathTextBox.Size = new System.Drawing.Size(1238, 23);
             this.PathTextBox.TabIndex = 0;
+            this.PathTextBox.Enter += new System.EventHandler(this.PathTextBox_Enter);
             this.PathTextBox.KeyDown += new System.Windows.Forms.KeyEventHandler(this.PathTextBox_KeyDown);
             // 
             // NavigationToolStrip
@@ -135,7 +136,7 @@
             this.deleteToolStripMenuItem,
             this.renameToolStripMenuItem});
             this.BookmarksContextMenuStrip.Name = "BookmarksContextMenuStrip";
-            this.BookmarksContextMenuStrip.Size = new System.Drawing.Size(184, 70);
+            this.BookmarksContextMenuStrip.Size = new System.Drawing.Size(184, 48);
             this.BookmarksContextMenuStrip.Opening += new System.ComponentModel.CancelEventHandler(this.BookmarksContextMenuStrip_Opening);
             // 
             // deleteToolStripMenuItem
@@ -258,6 +259,29 @@
             this.showSystemFilesToolStripMenuItem.Text = "Show System Files";
             this.showSystemFilesToolStripMenuItem.Click += new System.EventHandler(this.ShowHiddenFilesToolStripMenuItem_Click);
             // 
+            // bookmarksToolStripMenuItem
+            // 
+            this.bookmarksToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.addCurrentDirectoryToToolstripToolStripMenuItem,
+            this.addCurrentDirectoryToTreeToolStripMenuItem});
+            this.bookmarksToolStripMenuItem.Name = "bookmarksToolStripMenuItem";
+            this.bookmarksToolStripMenuItem.Size = new System.Drawing.Size(78, 20);
+            this.bookmarksToolStripMenuItem.Text = "Bookmarks";
+            // 
+            // addCurrentDirectoryToToolstripToolStripMenuItem
+            // 
+            this.addCurrentDirectoryToToolstripToolStripMenuItem.Name = "addCurrentDirectoryToToolstripToolStripMenuItem";
+            this.addCurrentDirectoryToToolstripToolStripMenuItem.Size = new System.Drawing.Size(253, 22);
+            this.addCurrentDirectoryToToolstripToolStripMenuItem.Text = "Add Current Directory to Toolstrip";
+            this.addCurrentDirectoryToToolstripToolStripMenuItem.Click += new System.EventHandler(this.AddCurrentDirectoryToToolstripToolStripMenuItem_Click);
+            // 
+            // addCurrentDirectoryToTreeToolStripMenuItem
+            // 
+            this.addCurrentDirectoryToTreeToolStripMenuItem.Name = "addCurrentDirectoryToTreeToolStripMenuItem";
+            this.addCurrentDirectoryToTreeToolStripMenuItem.Size = new System.Drawing.Size(253, 22);
+            this.addCurrentDirectoryToTreeToolStripMenuItem.Text = "Add Current Directory to Tree";
+            this.addCurrentDirectoryToTreeToolStripMenuItem.Click += new System.EventHandler(this.AddCurrentDirectoryToTreeToolStripMenuItem_Click);
+            // 
             // FilePaneSplitContainer
             // 
             this.FilePaneSplitContainer.Dock = System.Windows.Forms.DockStyle.Fill;
@@ -313,10 +337,6 @@
             this.splitContainer3.TabIndex = 0;
             this.splitContainer3.TabStop = false;
             // 
-            // SetEditorFileDialog
-            // 
-            this.SetEditorFileDialog.FileName = "openFileDialog1";
-            // 
             // LeftFilePane
             // 
             this.LeftFilePane.Dock = System.Windows.Forms.DockStyle.Fill;
@@ -333,28 +353,9 @@
             this.RightFilePane.Size = new System.Drawing.Size(516, 748);
             this.RightFilePane.TabIndex = 0;
             // 
-            // bookmarksToolStripMenuItem
+            // SetEditorFileDialog
             // 
-            this.bookmarksToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.addCurrentDirectoryToToolstripToolStripMenuItem,
-            this.addCurrentDirectoryToTreeToolStripMenuItem});
-            this.bookmarksToolStripMenuItem.Name = "bookmarksToolStripMenuItem";
-            this.bookmarksToolStripMenuItem.Size = new System.Drawing.Size(78, 20);
-            this.bookmarksToolStripMenuItem.Text = "Bookmarks";
-            // 
-            // addCurrentDirectoryToToolstripToolStripMenuItem
-            // 
-            this.addCurrentDirectoryToToolstripToolStripMenuItem.Name = "addCurrentDirectoryToToolstripToolStripMenuItem";
-            this.addCurrentDirectoryToToolstripToolStripMenuItem.Size = new System.Drawing.Size(253, 22);
-            this.addCurrentDirectoryToToolstripToolStripMenuItem.Text = "Add Current Directory to Toolstrip";
-            this.addCurrentDirectoryToToolstripToolStripMenuItem.Click += new System.EventHandler(this.AddCurrentDirectoryToToolstripToolStripMenuItem_Click);
-            // 
-            // addCurrentDirectoryToTreeToolStripMenuItem
-            // 
-            this.addCurrentDirectoryToTreeToolStripMenuItem.Name = "addCurrentDirectoryToTreeToolStripMenuItem";
-            this.addCurrentDirectoryToTreeToolStripMenuItem.Size = new System.Drawing.Size(253, 22);
-            this.addCurrentDirectoryToTreeToolStripMenuItem.Text = "Add Current Directory to Tree";
-            this.addCurrentDirectoryToTreeToolStripMenuItem.Click += new System.EventHandler(this.AddCurrentDirectoryToTreeToolStripMenuItem_Click);
+            this.SetEditorFileDialog.FileName = "openFileDialog1";
             // 
             // RangerMainForm
             // 

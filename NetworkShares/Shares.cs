@@ -399,9 +399,10 @@ namespace Trinet.Networking
 					Type t = (2 == level) ? typeof(SHARE_INFO_2) : typeof(SHARE_INFO_1);
 					int offset = Marshal.SizeOf(t);
 
-					for (long i=0, lpItem=pBuffer.ToInt64(); i<entriesRead; i++, lpItem+=offset) 
+                    IntPtr pItem = pBuffer;
+
+                    for (long i=0; i<entriesRead; i++)
 					{
-						IntPtr pItem = new IntPtr(lpItem);
 						if (1 == level) 
 						{
 							SHARE_INFO_1 si = (SHARE_INFO_1)Marshal.PtrToStructure(pItem, t);
@@ -412,7 +413,9 @@ namespace Trinet.Networking
 							SHARE_INFO_2 si = (SHARE_INFO_2)Marshal.PtrToStructure(pItem, t);
 							shares.Add(si.NetName, si.Path, si.ShareType, si.Remark);
 						}
-					}
+
+                        pItem = IntPtr.Add(pItem, offset);
+                    }
 				}
 				
 			}

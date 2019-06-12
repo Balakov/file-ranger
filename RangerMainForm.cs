@@ -792,5 +792,10 @@ namespace Ranger
             }
 
         }
+
+        private void PathTextBox_Enter(object sender, EventArgs e)
+        {
+            PathTextBox.SelectAll();
+        }
     }
 }

@@ -126,7 +126,7 @@ namespace Ranger
                 {
                     filesInView.Add(Path.GetFileName((lvi.Tag as FileTag).Path).ToLower(), lvi);
                 }
-                else if (lvi.Tag is DirectoryTag)
+                else if (lvi.Tag is DirectoryTag && !(lvi.Tag is ParentDirectoryTag)) // Don't delete the ".."
                 {
                     directoriesInView.Add(Path.GetFileName((lvi.Tag as DirectoryTag).Path).ToLower(), lvi);
                 }
@@ -186,6 +186,8 @@ namespace Ranger
 
             FileListView.EndUpdate();
             FileListView.ResumeLayout();
+
+            UpdateStatusBar(true);
         }
 
         private void AddPathsToView(IEnumerable<string> files, IEnumerable<string> subdirectories, string pathToSelect, out ListViewItem firstSelected, bool addParentDirDots)
@@ -203,7 +205,14 @@ namespace Ranger
 
                     foreach (string subdirectory in subdirectories)
                     {
-                        directoryInfos.Add(new DirectoryInfo(subdirectory));
+                        try
+                        {
+                            directoryInfos.Add(new DirectoryInfo(subdirectory));
+                        }
+                        catch
+                        {
+                            // We may not be able to create info objects for private network shares 
+                        }
                     }
 
                     switch (m_currentSortStyle)
@@ -229,7 +238,7 @@ namespace Ranger
 
                         FileListView.Items.Add(new ListViewItem(new string[] { "..", string.Empty, string.Empty, string.Empty }, folderIconIndex)
                         {
-                            Tag = new DirectoryTag(parentPath)
+                            Tag = new ParentDirectoryTag(parentPath)
                         });
                     }
 
@@ -271,7 +280,14 @@ namespace Ranger
 
                     foreach (string file in files)
                     {
-                        fileInfos.Add(new FileInfo(file));
+                        try
+                        {
+                            fileInfos.Add(new FileInfo(file));
+                        }
+                        catch
+                        {
+                            // Ignore files we don't have permission to read
+                        }
                     }
 
                     switch (m_currentSortStyle)
@@ -417,8 +433,6 @@ namespace Ranger
 
             CurrentPath = directory;
 
-            m_currentDriveFreeSpace = FileOperations.GetDriveFreeBytes(CurrentPath);
-
             ListViewItem firstSelected = null;
 
             try
@@ -481,7 +495,7 @@ namespace Ranger
                 }
             }
 
-            UpdateStatusBar();
+            UpdateStatusBar(true);
 
             return true;
         }
@@ -551,8 +565,13 @@ namespace Ranger
             PathLinkLabel.TabStop = false;
         }
 
-        private void UpdateStatusBar()
+        private void UpdateStatusBar(bool updateFreeDriveSpace)
         {
+            if (updateFreeDriveSpace)
+            {
+                m_currentDriveFreeSpace = FileOperations.GetDriveFreeBytes(CurrentPath);
+            }
+
             DriveSpaceStatusLabel.Text = string.Format("Free Space: {0:N0} bytes", m_currentDriveFreeSpace);
 
             int fileCount = 0;
@@ -995,6 +1014,21 @@ namespace Ranger
             }
         }
 
+        private void AddNewShortcut()
+        {
+            if (FileListView.SelectedItems.Count == 1)
+            {
+                if (FileListView.SelectedItems[0].Tag is PathTag pathTag)
+                {
+                    //pathTag.Path
+                }
+            }
+        }
+
+        private void AddNewZip()
+        {
+        }
+
         private List<string> SelectedItemsToPaths()
         {
             List<string> list = new List<string>();
@@ -1068,6 +1102,16 @@ namespace Ranger
         private void NewFolderToolStripMenuItem_Click(object sender, EventArgs e)
         {
             AddNewFolder();
+        }
+
+        private void NewShortcutToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            AddNewShortcut();
+        }
+
+        private void NewZipToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            AddNewZip();
         }
 
         private void PasteToolStripMenuItem_Click(object sender, EventArgs e)
@@ -1166,15 +1210,21 @@ namespace Ranger
                     IEnumerable<FileOperations.RegisteredHandler> handlers = FileOperations.GetRegisteredExtensionHandlers(extension);
                     foreach (var handler in handlers)
                     {
-                        ToolStripMenuItem item = new ToolStripMenuItem(handler.Name);
-                        item.Tag = handler.Command;
-                        item.Click += OnOpenWithClick;
-                        openWithToolStripMenuItem.DropDownItems.Add(item);
+                        if (handler.Command.Contains("%1"))
+                        {
+                            ToolStripMenuItem item = new ToolStripMenuItem(handler.Name);
+                            item.Tag = handler.Command;
+                            item.Click += OnOpenWithClick;
+                            openWithToolStripMenuItem.DropDownItems.Add(item);
+                        }
                     }
                 }
+
+                newShortcutToolStripMenuItem.Enabled = false;
             }
 
             openWithToolStripMenuItem.Enabled = openWithToolStripMenuItem.HasDropDownItems;
+            newZipToolStripMenuItem.Enabled = false;
         }
 
         private void OnOpenWithClick(object sender, EventArgs e)
@@ -1248,7 +1298,7 @@ namespace Ranger
         private void StatusBarRefreshTimer_Tick(object sender, EventArgs e)
         {
             StatusBarRefreshTimer.Stop();
-            UpdateStatusBar();
+            UpdateStatusBar(false);
         }
     }
 }

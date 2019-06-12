@@ -25,19 +25,21 @@
             this.NewFolderToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.toolStripMenuItem1 = new System.Windows.Forms.ToolStripSeparator();
             this.EditToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.openWithToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.toolStripMenuItem2 = new System.Windows.Forms.ToolStripSeparator();
             this.copyToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.cutToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.PasteToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.toolStripMenuItem3 = new System.Windows.Forms.ToolStripSeparator();
             this.propertiesToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.FileListView = new FlickerFreeListView();
+            this.FileListView = new Ranger.FlickerFreeListView();
             this.FileColumnHeader = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.SizeColumnHeader = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.AttribColumnHeader = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.ModifiedColumnHeader = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.StatusBarRefreshTimer = new System.Windows.Forms.Timer(this.components);
-            this.openWithToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.newShortcutToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.newZipToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.StatusBar.SuspendLayout();
             this.FilePaneContextMenuStrip.SuspendLayout();
             this.SuspendLayout();
@@ -86,6 +88,8 @@
             this.FilePaneContextMenuStrip.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.nNwFileToolStripMenuItem,
             this.NewFolderToolStripMenuItem,
+            this.newShortcutToolStripMenuItem,
+            this.newZipToolStripMenuItem,
             this.toolStripMenuItem1,
             this.EditToolStripMenuItem,
             this.openWithToolStripMenuItem,
@@ -96,7 +100,7 @@
             this.toolStripMenuItem3,
             this.propertiesToolStripMenuItem});
             this.FilePaneContextMenuStrip.Name = "FilePaneContextMenuStrip";
-            this.FilePaneContextMenuStrip.Size = new System.Drawing.Size(181, 220);
+            this.FilePaneContextMenuStrip.Size = new System.Drawing.Size(181, 264);
             this.FilePaneContextMenuStrip.Opening += new System.ComponentModel.CancelEventHandler(this.FilePaneContextMenuStrip_Opening);
             // 
             // nNwFileToolStripMenuItem
@@ -124,6 +128,12 @@
             this.EditToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
             this.EditToolStripMenuItem.Text = "Edit";
             this.EditToolStripMenuItem.Click += new System.EventHandler(this.EditToolStripMenuItem_Click);
+            // 
+            // openWithToolStripMenuItem
+            // 
+            this.openWithToolStripMenuItem.Name = "openWithToolStripMenuItem";
+            this.openWithToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.openWithToolStripMenuItem.Text = "Open with...";
             // 
             // toolStripMenuItem2
             // 
@@ -219,11 +229,19 @@
             this.StatusBarRefreshTimer.Interval = 250;
             this.StatusBarRefreshTimer.Tick += new System.EventHandler(this.StatusBarRefreshTimer_Tick);
             // 
-            // openWithToolStripMenuItem
+            // newShortcutToolStripMenuItem
             // 
-            this.openWithToolStripMenuItem.Name = "openWithToolStripMenuItem";
-            this.openWithToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
-            this.openWithToolStripMenuItem.Text = "Open with...";
+            this.newShortcutToolStripMenuItem.Name = "newShortcutToolStripMenuItem";
+            this.newShortcutToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.newShortcutToolStripMenuItem.Text = "New Shortcut";
+            this.newShortcutToolStripMenuItem.Click += new System.EventHandler(this.NewShortcutToolStripMenuItem_Click);
+            // 
+            // newZipToolStripMenuItem
+            // 
+            this.newZipToolStripMenuItem.Name = "newZipToolStripMenuItem";
+            this.newZipToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.newZipToolStripMenuItem.Text = "New Zip";
+            this.newZipToolStripMenuItem.Click += new System.EventHandler(this.NewZipToolStripMenuItem_Click);
             // 
             // FilePane
             // 
@@ -266,5 +284,7 @@
         private System.Windows.Forms.ToolStripMenuItem propertiesToolStripMenuItem;
         private System.Windows.Forms.Timer StatusBarRefreshTimer;
         private System.Windows.Forms.ToolStripMenuItem openWithToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem newShortcutToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem newZipToolStripMenuItem;
     }
 }
