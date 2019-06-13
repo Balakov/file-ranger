@@ -23,6 +23,7 @@ namespace Ranger
         private Dictionary<string, int> m_cachedFullPathsOverlay = new Dictionary<string, int>();
         private Dictionary<string, int> m_cachedDirectoryPaths = new Dictionary<string, int>();
         private Dictionary<string, int> m_cachedDirectoryPathsOverlay = new Dictionary<string, int>();
+        private Dictionary<string, int> m_cachedDrivePaths = new Dictionary<string, int>();
 
         private List<ImageList> m_imageLists = new List<ImageList>();
 
@@ -37,14 +38,20 @@ namespace Ranger
             Dictionary<string, int> cacheToUse = null;
             string cacheKey = null;
 
+            // Make sure we're not passing a drive in as a directory
+            if (pathType == PathType.Directory && path.Length < 4)
+            {
+                pathType = PathType.Drive;
+            }
+
             // Check that we haven't already got this path, if we have, then return back its index
             if (pathType == PathType.File)
             {
-                string fileExtention = System.IO.Path.GetExtension(path).ToLower();
-                if (path == "exe")
+                string fileExtension = System.IO.Path.GetExtension(path).ToLower();
+                if (fileExtension == ".exe" || fileExtension == ".ico")
                 {
                     cacheToUse = isOverlay ? m_cachedFullPathsOverlay : m_cachedFullPaths;
-                    cacheKey = fileExtention;
+                    cacheKey = fileExtension;
                 }
                 else
                 {
@@ -76,13 +83,14 @@ namespace Ranger
             }
             else if (pathType == PathType.Drive)
             {
-                cacheToUse = isOverlay ? m_cachedFullPathsOverlay : m_cachedFullPaths;
-                cacheKey = path;
+                cacheToUse = m_cachedDrivePaths;
+                cacheKey = "DRV" + path;
             }
 
             Dictionary<int, int> systemindicesToUse = isOverlay ? m_systemOverlayIconindicies : m_systemIconIndices;
 
-            if (cacheToUse.TryGetValue(cacheKey, out int imageIndex))
+            int imageIndex;
+            if (cacheToUse.TryGetValue(cacheKey, out imageIndex))
             {
                 return imageIndex;
             }
@@ -91,16 +99,22 @@ namespace Ranger
                 int index;
                 bool isDirectory = pathType != PathType.File;
 
-                var icon = Etier.IconHelper.IconReader.GetFileIcon(path, Etier.IconHelper.IconReader.IconSize.Small, isOverlay, isDirectory, out int iIcon);
-                if (systemindicesToUse.TryGetValue(iIcon, out int existingIndex))
+                int iIcon;
+                var icon = Etier.IconHelper.IconReader.GetFileIcon(path, Etier.IconHelper.IconReader.IconSize.Small, isOverlay, isDirectory, out iIcon);
+
+                int existingIndex;
+                if (systemindicesToUse.TryGetValue(iIcon, out existingIndex))
                 {
                     index = existingIndex;
+                    icon.Dispose(); // Not going to keep this - we're using an existing one.
                 }
                 else
                 {
                     index = m_imageLists[0].Images.Count;
                     m_imageLists[0].Images.Add(icon);
-                    m_imageLists[1].Images.Add(Etier.IconHelper.IconReader.GetFileIcon(path, Etier.IconHelper.IconReader.IconSize.Large, isOverlay, isDirectory, out int dummyiIcon));
+
+                    int dummyiIcon;
+                    m_imageLists[1].Images.Add(Etier.IconHelper.IconReader.GetFileIcon(path, Etier.IconHelper.IconReader.IconSize.Large, isOverlay, isDirectory, out dummyiIcon));
                     systemindicesToUse.Add(iIcon, index);
                 }
 

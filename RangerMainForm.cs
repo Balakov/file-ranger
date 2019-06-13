@@ -397,6 +397,7 @@ namespace Ranger
             LeftFilePane.ActivatePane();
             RightFilePane.DeactivatePane();
             m_activePane = LeftFilePane;
+            PathTextBox.Text = m_activePane.CurrentPath;
             UpdateTitleBar();
         }
 
@@ -405,6 +406,7 @@ namespace Ranger
             LeftFilePane.DeactivatePane();
             RightFilePane.ActivatePane();
             m_activePane = RightFilePane;
+            PathTextBox.Text = m_activePane.CurrentPath;
             UpdateTitleBar();
         }
 
@@ -490,7 +492,8 @@ namespace Ranger
                         {
                             DirectoryInfo di = new DirectoryInfo(dir);
 
-                            if (ViewFilter.FilterViewByAttributes(di.Attributes, m_viewMask, out Color itemColour))
+                            Color itemColour;
+                            if (ViewFilter.FilterViewByAttributes(di.Attributes, m_viewMask, out itemColour))
                             {
                                 int folderIconIndex = m_iconListManager.AddFolderIcon(dir, false);
 
@@ -675,8 +678,10 @@ namespace Ranger
 
         private void Bookmark_Click(object sender, EventArgs e)
         {
-            if (sender is ToolStripItem item)
+            if (sender is ToolStripItem)
             {
+                ToolStripItem item = sender as ToolStripItem;
+
                 if (item.Tag is BookmarkFileTag)
                 {
                     string file = (item.Tag as BookmarkFileTag).Path;
@@ -696,10 +701,14 @@ namespace Ranger
             UIItem = null;
 
             // The menu item will be the child of a ContextMenu that has a tag of type ToolStripButtonWithContextMenu.
-            if (sender is ToolStripItem item)
+            if (sender is ToolStripItem)
             {
-                if (item.Owner is ContextMenuStrip contextMenu)
+                ToolStripItem item = sender as ToolStripItem;
+
+                if (item.Owner is ContextMenuStrip)
                 {
+                    ContextMenuStrip contextMenu = item.Owner as ContextMenuStrip;
+
                     if (contextMenu.Tag is ToolStripButtonWithContextMenu)
                     {
                         var button = contextMenu.Tag as ToolStripButtonWithContextMenu;
@@ -724,7 +733,8 @@ namespace Ranger
 
         private void DeleteBookmark_Click(object sender, EventArgs e)
         {
-            var bookmarkTag = BookmarkButtonFromContextClick(sender, out object UIItem);
+            object UIItem;
+            var bookmarkTag = BookmarkButtonFromContextClick(sender, out UIItem);
             if (bookmarkTag != null)
             {
                 if (MessageBox.Show($"Are you sure you want to delete this bookmark?",
@@ -747,7 +757,8 @@ namespace Ranger
 
         private void RenameToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            var bookmarkTag = BookmarkButtonFromContextClick(sender, out object UIItem);
+            object UIItem;
+            var bookmarkTag = BookmarkButtonFromContextClick(sender, out UIItem);
             if (bookmarkTag != null)
             {
                 var form = new RenameBookmarkForm(bookmarkTag.DisplayName);
@@ -782,15 +793,21 @@ namespace Ranger
 
         private void BookmarksContextMenuStrip_Opening(object sender, System.ComponentModel.CancelEventArgs e)
         {
-            if(sender is ContextMenuStrip contextMenu && contextMenu.SourceControl is TreeView)
+            if(sender is ContextMenuStrip)
             {
-                var tree = (contextMenu.SourceControl as TreeView);
-                if (tree.SelectedNode?.Tag as BookmarkTag == null)
+                ContextMenuStrip contextMenu = sender as ContextMenuStrip;
+
+                if (contextMenu.SourceControl is TreeView)
                 {
+                    var tree = (contextMenu.SourceControl as TreeView);
+                    if (tree.SelectedNode?.Tag as BookmarkTag != null)
+                    {
+                        return;
+                    }
+
                     e.Cancel = true;
                 }
             }
-
         }
 
         private void PathTextBox_Enter(object sender, EventArgs e)

@@ -5,11 +5,8 @@ using System.Drawing;
 using System.Data;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Forms;
 using System.IO;
-using System.Collections.Specialized;
-using Microsoft.Win32;
 
 namespace Ranger
 {
@@ -34,6 +31,18 @@ namespace Ranger
         {
             GrabFocus,
             NoFocusChange
+        }
+
+        public enum DirectoryListType
+        {
+            Normal,
+            NetworkShares
+        }
+
+        public enum ParentDotDisplay
+        {
+            Enabled,
+            Disabled
         }
 
         private SortStyle m_currentSortStyle = SortStyle.Name;
@@ -182,7 +191,8 @@ namespace Ranger
                 m_pendingPathToSelect = null;
             }
 
-            AddPathsToView(filesToAdd, directoriesToAdd, pathToSelect, out ListViewItem dummy, false);
+            ListViewItem dummy;
+            AddPathsToView(filesToAdd, directoriesToAdd, pathToSelect, out dummy, ParentDotDisplay.Disabled, DirectoryListType.Normal);
 
             FileListView.EndUpdate();
             FileListView.ResumeLayout();
@@ -190,13 +200,17 @@ namespace Ranger
             UpdateStatusBar(true);
         }
 
-        private void AddPathsToView(IEnumerable<string> files, IEnumerable<string> subdirectories, string pathToSelect, out ListViewItem firstSelected, bool addParentDirDots)
+        private void AddPathsToView(IEnumerable<string> files, 
+                                    IEnumerable<string> subdirectories, 
+                                    string pathToSelect, 
+                                    out ListViewItem firstSelected, 
+                                    ParentDotDisplay parentDots,
+                                    DirectoryListType directoryListType)
         {
             firstSelected = null;
 
             try
             {
-                StringBuilder attribs = new StringBuilder("---");
                 ListViewItem pendingItemToEdit = null;
 
                 // Directories
@@ -207,7 +221,8 @@ namespace Ranger
                     {
                         try
                         {
-                            directoryInfos.Add(new DirectoryInfo(subdirectory));
+                            DirectoryInfo di = new DirectoryInfo(subdirectory);
+                            directoryInfos.Add(di);
                         }
                         catch
                         {
@@ -230,7 +245,7 @@ namespace Ranger
                             break;
                     }
 
-                    if (addParentDirDots)
+                    if (parentDots == ParentDotDisplay.Enabled)
                     {
                         int folderIconIndex = IconListManager.AddFolderIcon(CurrentPath, false);
                         string[] parts = CurrentPath.TrimEnd(new char[] { Path.DirectorySeparatorChar }).Split(Path.DirectorySeparatorChar);
@@ -244,13 +259,28 @@ namespace Ranger
 
                     foreach (var di in directoryInfos)
                     {
-                        if (ViewFilter.FilterViewByAttributes(di.Attributes, m_viewMask, out Color itemColor))
+                        FileAttributes directoryAttribs = 0;
+                        string dateString = "";
+                        if (directoryListType == DirectoryListType.Normal)
+                        {
+                            try
+                            {
+                                directoryAttribs = di.Attributes;
+                                dateString = di.LastWriteTime.ToString("dd/MM/yyyy HH:mm:ss");
+                            }
+                            catch
+                            {
+                            }
+                        }
+
+                        Color itemColor;
+                        if (ViewFilter.FilterViewByAttributes(directoryAttribs, m_viewMask, out itemColor))
                         {
                             string sizeString = "<folder>";
-                            string dateString = di.LastWriteTime.ToString("dd/MM/yyyy HH:mm:ss");
-                            string attribsString = AttribsToString(di.Attributes);
+                            string attribsString = AttribsToString(directoryAttribs);
+                            bool isShortcut = Path.GetExtension(di.FullName).ToLower() == ".lnk";
 
-                            int folderIconIndex = IconListManager.AddFolderIcon(di.FullName, false);
+                            int folderIconIndex = IconListManager.AddFolderIcon(di.FullName, isShortcut);
 
                             var lvi = new ListViewItem(new string[] { Path.GetFileName(di.FullName), sizeString, attribsString, dateString }, folderIconIndex)
                             {
@@ -311,13 +341,26 @@ namespace Ranger
 
                     foreach (var fi in fileInfos)
                     {
-                        if (ViewFilter.FilterViewByAttributes(fi.Attributes, m_viewMask, out Color itemColour))
+                        FileAttributes fileAttribs = 0;
+                        string sizeString = "";
+                        string dateString = "";
+                        try
                         {
-                            string sizeString = string.Format("{0:N0}", fi.Length);
-                            string dateString = fi.LastWriteTime.ToString("dd/MM/yyyy HH:mm:ss");
-                            string attribsString = AttribsToString(fi.Attributes);
+                            fileAttribs = fi.Attributes;
+                            sizeString = string.Format("{0:N0}", fi.Length);
+                            dateString = fi.LastWriteTime.ToString("dd/MM/yyyy HH:mm:ss");
+                        }
+                        catch
+                        {
+                        }
 
-                            var lvi = new ListViewItem(new string[] { Path.GetFileName(fi.FullName), sizeString, attribsString, dateString }, IconListManager.AddFileIcon(fi.FullName, false))
+                        Color itemColour;
+                        if (ViewFilter.FilterViewByAttributes(fileAttribs, m_viewMask, out itemColour))
+                        {
+                            string attribsString = AttribsToString(fileAttribs);
+                            bool isShortcut = Path.GetExtension(fi.FullName).ToLower() == ".lnk";
+
+                            var lvi = new ListViewItem(new string[] { Path.GetFileName(fi.FullName), sizeString, attribsString, dateString }, IconListManager.AddFileIcon(fi.FullName, isShortcut))
                             {
                                 Tag = new FileTag(fi),
                                 ForeColor = itemColour
@@ -451,14 +494,15 @@ namespace Ranger
                         }
                     }
 
-                    AddPathsToView(new string[0], sharePaths, pathToSelect, out firstSelected, false);
+                    AddPathsToView(new string[0], sharePaths, pathToSelect, out firstSelected, ParentDotDisplay.Disabled, DirectoryListType.NetworkShares);
                 }
                 else
                 {
                     string[] directories = Directory.GetDirectories(directory, "*", SearchOption.TopDirectoryOnly);
                     string[] files = Directory.GetFiles(directory, "*", SearchOption.TopDirectoryOnly);
+                    bool isRoot = directory.Length < 4;
 
-                    AddPathsToView(files, directories, pathToSelect, out firstSelected, !isRootUNCPath);
+                    AddPathsToView(files, directories, pathToSelect, out firstSelected, isRoot ? ParentDotDisplay.Disabled : ParentDotDisplay.Enabled, DirectoryListType.Normal);
                 }
             }
             catch(Exception e)
@@ -667,7 +711,10 @@ namespace Ranger
 
         private void FileListView_ItemDrag(object sender, ItemDragEventArgs e)
         {
-            FileListView.DoDragDrop(FileListView.SelectedItems, DragDropEffects.Copy | DragDropEffects.Move | DragDropEffects.Link);
+            var dataObject = ClipboardManager.PathsToDataObject(SelectedItemsToPaths(), FileOperations.OperationType.Copy);
+            dataObject.SetData(FileListView.SelectedItems);
+
+            FileListView.DoDragDrop(dataObject, DragDropEffects.Copy | DragDropEffects.Move | DragDropEffects.Link);
         }
 
         private void FileListView_DragOver(object sender, DragEventArgs e)
@@ -675,25 +722,31 @@ namespace Ranger
             if (e.Data.GetDataPresent(typeof(ListView.SelectedListViewItemCollection)) ||
                 e.Data.GetDataPresent(DataFormats.FileDrop))
             {
-                IEnumerable<string> path = PathsFromDragDropSource(e.Data);
-
-                string currentPathRoot = Path.GetPathRoot(CurrentPath);
-
-                // If all files are on the same drive, or ALT is pressed, move the files.
-                bool wouldMove = path.All((x) =>
+                IEnumerable<string> paths = PathsFromDragDropSource(e.Data);
+                if (paths != null)
                 {
-                    return Path.GetPathRoot(x) == currentPathRoot;
-                });
+                    string currentPathRoot = Path.GetPathRoot(CurrentPath);
 
-                // If Alt pressed, invert the operation
-                if ((e.KeyState & 32) == 32)    
-                {
-                    e.Effect = wouldMove ? DragDropEffects.Copy : DragDropEffects.Move;
+                    // If all files are on the same drive, or ALT is pressed, move the files.
+                    bool wouldMove = paths.All((x) =>
+                    {
+                        return Path.GetPathRoot(x) == currentPathRoot;
+                    });
+
+                    // If Alt pressed, invert the operation
+                    if ((e.KeyState & 32) == 32)
+                    {
+                        e.Effect = wouldMove ? DragDropEffects.Copy : DragDropEffects.Move;
+                    }
+                    else
+                    {
+                        e.Effect = wouldMove ? DragDropEffects.Move : DragDropEffects.Copy;
+                    }
                 }
-                else
-                {
-                    e.Effect = wouldMove ? DragDropEffects.Move : DragDropEffects.Copy;
-                }
+            }
+            else
+            {
+                e.Effect = DragDropEffects.None;
             }
         }
 
@@ -943,22 +996,15 @@ namespace Ranger
 
         private void HandleCopy(bool isCut)
         {
-            List<string> paths = new List<string>();
-            foreach (ListViewItem selectedItem in FileListView.SelectedItems)
-            {
-                if (selectedItem.Tag is PathTag)
-                {
-                    paths.Add((selectedItem.Tag as PathTag).Path);
-                }
-            }
 
-            ClipboardManager.CopyPathsToClipboard(paths, isCut ? FileOperations.OperationType.Move :
-                                                                 FileOperations.OperationType.Copy);
+            ClipboardManager.CopyPathsToClipboard(SelectedItemsToPaths(), isCut ? FileOperations.OperationType.Move :
+                                                                                  FileOperations.OperationType.Copy);
         }
 
         private void HandlePaste()
         {
-            IEnumerable<string> paths = ClipboardManager.GetPathsFromClipboard(out FileOperations.OperationType fileOp);
+            FileOperations.OperationType fileOp;
+            IEnumerable<string> paths = ClipboardManager.GetPathsFromClipboard(out fileOp);
             OnDropOrPaste(paths, CurrentPath, fileOp, FileOperations.PasteOverSelfType.Allowed);
         }
 
@@ -1018,15 +1064,22 @@ namespace Ranger
         {
             if (FileListView.SelectedItems.Count == 1)
             {
-                if (FileListView.SelectedItems[0].Tag is PathTag pathTag)
+                if (FileListView.SelectedItems[0].Tag is PathTag)
                 {
-                    //pathTag.Path
+                    PathTag pathTag = FileListView.SelectedItems[0].Tag as PathTag;
+
+                    var shell = new IWshRuntimeLibrary.WshShell();
+                    string shortcutPath = pathTag.Path + " - Shortcut.lnk";
+
+                    if (!File.Exists(shortcutPath))
+                    {
+                        var shortcut = (IWshRuntimeLibrary.IWshShortcut)shell.CreateShortcut(shortcutPath);
+                        shortcut.Hotkey = "Ctrl+Shift+N";
+                        shortcut.TargetPath = pathTag.Path;
+                        shortcut.Save();
+                    }
                 }
             }
-        }
-
-        private void AddNewZip()
-        {
         }
 
         private List<string> SelectedItemsToPaths()
@@ -1094,6 +1147,11 @@ namespace Ranger
             StatusBarRefreshTimer.Start();
         }
 
+        private void openToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            FileListView_ItemActivate(null, null);
+        }
+
         private void NewFileToolStripMenuItem_Click(object sender, EventArgs e)
         {
             AddNewFile();
@@ -1107,11 +1165,6 @@ namespace Ranger
         private void NewShortcutToolStripMenuItem_Click(object sender, EventArgs e)
         {
             AddNewShortcut();
-        }
-
-        private void NewZipToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-            AddNewZip();
         }
 
         private void PasteToolStripMenuItem_Click(object sender, EventArgs e)
@@ -1194,66 +1247,25 @@ namespace Ranger
 
         private void FilePaneContextMenuStrip_Opening(object sender, CancelEventArgs e)
         {
-            openWithToolStripMenuItem.DropDownItems.Clear();
-
             // Only allow copy if we have selected paths
-            bool filesSelected = FileListView.SelectedItems.Count > 0;
-            copyToolStripMenuItem.Enabled = filesSelected;
-            cutToolStripMenuItem.Enabled = filesSelected;
-            propertiesToolStripMenuItem.Enabled = FileListView.SelectedItems.Count == 1;
+            bool anyFilesSelected = FileListView.SelectedItems.Count > 0;
+            bool singleFileSelected = FileListView.SelectedItems.Count == 1;
 
-            if (filesSelected)
+            newShortcutToolStripMenuItem.Enabled = singleFileSelected;
+            copyToolStripMenuItem.Enabled = anyFilesSelected;
+            cutToolStripMenuItem.Enabled = anyFilesSelected;
+            openWithToolStripMenuItem.Enabled = singleFileSelected;
+            propertiesToolStripMenuItem.Enabled = singleFileSelected;
+
+            if (singleFileSelected)
             {
-                if (FileListView.SelectedItems[0].Tag is FileTag fileTag)
+                if (FileListView.SelectedItems[0].Tag is PathTag)
                 {
-                    string extension = Path.GetExtension(fileTag.Path);
-                    IEnumerable<FileOperations.RegisteredHandler> handlers = FileOperations.GetRegisteredExtensionHandlers(extension);
-                    foreach (var handler in handlers)
-                    {
-                        if (handler.Command.Contains("%1"))
-                        {
-                            ToolStripMenuItem item = new ToolStripMenuItem(handler.Name);
-                            item.Tag = handler.Command;
-                            item.Click += OnOpenWithClick;
-                            openWithToolStripMenuItem.DropDownItems.Add(item);
-                        }
-                    }
-                }
-
-                newShortcutToolStripMenuItem.Enabled = false;
-            }
-
-            openWithToolStripMenuItem.Enabled = openWithToolStripMenuItem.HasDropDownItems;
-            newZipToolStripMenuItem.Enabled = false;
-        }
-
-        private void OnOpenWithClick(object sender, EventArgs e)
-        {
-            if (sender is ToolStripMenuItem menuItem && menuItem.Tag is string handler)
-            {
-                if (FileListView.SelectedItems[0].Tag is FileTag fileTag)
-                {
-                    string pathToRun = handler.Replace("%1", fileTag.Path);
-                    string exe;
-                    string args;
-
-                    if (pathToRun.StartsWith("\""))
-                    {
-                        int endQuote = pathToRun.IndexOf("\"", 1);
-                        exe = pathToRun.Substring(1, endQuote-1);
-                        args = pathToRun.Substring(endQuote+1);
-                    }
-                    else
-                    {
-                        string[] pathParts = pathToRun.Split();
-                        exe = pathParts[0];
-                        args = string.Join(" ", pathParts, 1, pathParts.Length - 1);
-                    }
-
-                    Console.WriteLine($"Handler exe:{exe} with args:{args}");
-                    FileOperations.ExecuteFile(exe, args);
+                    PathTag pathTag = FileListView.SelectedItems[0].Tag as PathTag;
+                    newShortcutToolStripMenuItem.Enabled = !pathTag.Path.ToLower().EndsWith(".lnk");
                 }
             }
+
         }
 
         private void EditToolStripMenuItem_Click(object sender, EventArgs e)
@@ -1299,6 +1311,16 @@ namespace Ranger
         {
             StatusBarRefreshTimer.Stop();
             UpdateStatusBar(false);
+        }
+
+        private void openWithToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            if (FileListView.SelectedItems[0].Tag is FileTag)
+            {
+                FileTag fileTag = FileListView.SelectedItems[0].Tag as FileTag;
+                // Do NOT add quotes around the path. This makes it not work.
+                FileOperations.ExecuteFile("rundll32.exe", "shell32.dll, OpenAs_RunDLL " + fileTag.Path);
+            }
         }
     }
 }

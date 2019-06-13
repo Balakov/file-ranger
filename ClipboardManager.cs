@@ -2,9 +2,7 @@
 using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.IO;
-using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace Ranger
@@ -18,7 +16,7 @@ namespace Ranger
             public FileOperations.OperationType FileOperation;
         }
 
-        public static void CopyPathsToClipboard(IEnumerable<string> paths, FileOperations.OperationType fileOp)
+        public static IDataObject PathsToDataObject(IEnumerable<string> paths, FileOperations.OperationType fileOp)
         {
             FileOperationPathList pathList = new FileOperationPathList()
             {
@@ -39,7 +37,13 @@ namespace Ranger
             dataObject.SetData(pathList);
             dataObject.SetFileDropList(fileDroplist);
             dataObject.SetText(sb.ToString());
-            Clipboard.SetDataObject(dataObject);
+
+            return dataObject;
+        }
+
+        public static void CopyPathsToClipboard(IEnumerable<string> paths, FileOperations.OperationType fileOp)
+        {
+            Clipboard.SetDataObject(PathsToDataObject(paths, fileOp));
         }
 
         public static IEnumerable<string> GetPathsFromClipboard(out FileOperations.OperationType fileOp)
