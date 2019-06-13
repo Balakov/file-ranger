@@ -20,6 +20,12 @@ namespace Ranger
             NotAllowed
         }
 
+        public enum OperationBlockingBehaviour
+        {
+            HandOffToThread,
+            BlockUntilComplete
+        }
+
         [DllImport("shell32.dll", CharSet = CharSet.Unicode)]
         private static extern int SHFileOperation([In] ref SHFILEOPSTRUCT lpFileOp);
 
@@ -69,20 +75,34 @@ namespace Ranger
             FOF_NORECURSEREPARSE = 0x8000,
         }
 
-        public static void MoveFiles(List<string> fromList, List<string> toList)
+        public static void MoveFiles(List<string> fromList, List<string> toList, OperationBlockingBehaviour blockingBehaviour)
         {
-            new System.Threading.Thread(() =>
+            var thread = new System.Threading.Thread(() =>
             {
                 CopyFilesInternal(fromList, toList, FILE_OP_TYPE.FO_MOVE);
-            }).Start();
+            });
+
+            thread.Start();
+
+            if (blockingBehaviour == OperationBlockingBehaviour.BlockUntilComplete)
+            {
+                thread.Join();
+            }
         }
 
-        public static void CopyFiles(List<string> fromList, List<string> toList)
+        public static void CopyFiles(List<string> fromList, List<string> toList, OperationBlockingBehaviour blockingBehaviour)
         {
-            new System.Threading.Thread(() =>
+            var thread = new System.Threading.Thread(() =>
             {
                 CopyFilesInternal(fromList, toList, FILE_OP_TYPE.FO_COPY);
-            }).Start();
+            });
+
+            thread.Start();
+
+            if (blockingBehaviour == OperationBlockingBehaviour.BlockUntilComplete)
+            {
+                thread.Join();
+            }
         }
 
         private static bool CopyFilesInternal(List<string> fromList, List<string> toList, FILE_OP_TYPE opType)

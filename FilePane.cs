@@ -914,13 +914,18 @@ namespace Ranger
 
             if (copyFrom.Count > 0)
             {
+                // If the common root is in the %temp% directory, don't thread the operation. This is probably a compressed
+                // file extraction or other operation that's going to clean up temp files after we return from the DragDrop.
+                FileOperations.OperationBlockingBehaviour blockingBehaviour = commonRoot.StartsWith(Path.GetTempPath()) ? FileOperations.OperationBlockingBehaviour.BlockUntilComplete :
+                                                                                                                          FileOperations.OperationBlockingBehaviour.HandOffToThread;
+
                 if (fileOp == FileOperations.OperationType.Move)
                 {
-                    FileOperations.MoveFiles(copyFrom, copyTo);
+                    FileOperations.MoveFiles(copyFrom, copyTo, blockingBehaviour);
                 }
                 else
                 {
-                    FileOperations.CopyFiles(copyFrom, copyTo);
+                    FileOperations.CopyFiles(copyFrom, copyTo, blockingBehaviour);
                 }
             }
         }
