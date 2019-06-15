@@ -14,12 +14,13 @@ namespace Ranger
         public enum ViewMask
         {
             ShowHidden = 1 << 0,
-            ShowSystem = 1 << 1
+            ShowSystem = 1 << 1,
+            ShowDot = 1 << 2
         }
 
-        public static bool FilterViewByAttributes(FileAttributes attributes, ViewMask viewMask, out Color colour)
+        public static bool FilterViewByAttributes(FileAttributes attributes, ViewMask viewMask, bool isDot, out Color colour)
         {
-            if (attributes.HasFlag(FileAttributes.Hidden) || attributes.HasFlag(FileAttributes.System))
+            if (attributes.HasFlag(FileAttributes.Hidden) || attributes.HasFlag(FileAttributes.System) || isDot)
                 colour = Color.Gray;
             else
                 colour = Color.Black;
@@ -30,6 +31,11 @@ namespace Ranger
             }
 
             if (attributes.HasFlag(FileAttributes.System) && !viewMask.HasFlag(ViewMask.ShowSystem))
+            {
+                return false;
+            }
+
+            if (isDot && !viewMask.HasFlag(ViewMask.ShowDot))
             {
                 return false;
             }

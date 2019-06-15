@@ -106,6 +106,7 @@
     </Compile>
     <Compile Include="IconHelper\IconHelper.cs" />
     <Compile Include="IconHelper\ShellIconCache.cs" />
+    <Compile Include="IconHelper\StockIconIDs.cs" />
     <Compile Include="NetworkShares\Shares.cs" />
     <Compile Include="PathHistory.cs" />
     <Compile Include="RangerMainForm.cs">

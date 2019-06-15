@@ -170,8 +170,8 @@ namespace Ranger
 
         private static string FilenamesToShellString(List<string> filenames)
         {
-            // MAX_PATH is 255 chars
-            StringBuilder result = new StringBuilder(255 * filenames.Count);
+            // MAX_PATH is 260 chars
+            StringBuilder result = new StringBuilder(260 * filenames.Count);
 
             foreach (string file in filenames)
             {

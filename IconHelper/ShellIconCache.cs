@@ -24,13 +24,47 @@ namespace Ranger
         private Dictionary<string, int> m_cachedDirectoryPaths = new Dictionary<string, int>();
         private Dictionary<string, int> m_cachedDirectoryPathsOverlay = new Dictionary<string, int>();
         private Dictionary<string, int> m_cachedDrivePaths = new Dictionary<string, int>();
+        private Dictionary<StockIconID, int> m_cachedStockIcons = new Dictionary<StockIconID, int>();
 
         private List<ImageList> m_imageLists = new List<ImageList>();
 
-        public IconListManager(ImageList smallImageList, ImageList largeImageList)
+        public IconListManager(ImageList smallImageList)
         {
             m_imageLists.Add(smallImageList);
-            m_imageLists.Add(largeImageList);
+        }
+
+        public int AddStockIcon(StockIconID iconID)
+        {
+            int existingImageListID;
+            if (m_cachedStockIcons.TryGetValue(iconID, out existingImageListID))
+            {
+                return existingImageListID;
+            }
+            else
+            {
+                int index;
+
+                int iIcon;
+                var icon = Etier.IconHelper.IconReader.GetStockIcon((Etier.IconHelper.Shell32.SHSTOCKICONID)iconID, out iIcon);
+
+                int existingImageListIndex;
+                if (m_systemIconIndices.TryGetValue(iIcon, out existingImageListIndex))
+                {
+                    index = existingImageListIndex;
+                    icon.Dispose(); // Not going to keep this - we're using an existing one.
+                }
+                else
+                {
+                    index = m_imageLists[0].Images.Count;
+                    m_imageLists[0].Images.Add(icon);
+
+                    m_systemIconIndices.Add(iIcon, index);
+                }
+
+                m_cachedStockIcons.Add(iconID, index);
+
+                return index;
+            }
         }
 
         public int AddPathIcon(string path, PathType pathType, bool isOverlay)
@@ -51,12 +85,12 @@ namespace Ranger
                 if (fileExtension == ".exe" || fileExtension == ".ico")
                 {
                     cacheToUse = isOverlay ? m_cachedFullPathsOverlay : m_cachedFullPaths;
-                    cacheKey = fileExtension;
+                    cacheKey = path;
                 }
                 else
                 {
                     cacheToUse = isOverlay ? m_cachedExtensionsOverlay : m_cachedExtentions;
-                    cacheKey = path;
+                    cacheKey = fileExtension;
                 }
             }
             else if (pathType == PathType.Directory)
@@ -113,8 +147,6 @@ namespace Ranger
                     index = m_imageLists[0].Images.Count;
                     m_imageLists[0].Images.Add(icon);
 
-                    int dummyiIcon;
-                    m_imageLists[1].Images.Add(Etier.IconHelper.IconReader.GetFileIcon(path, Etier.IconHelper.IconReader.IconSize.Large, isOverlay, isDirectory, out dummyiIcon));
                     systemindicesToUse.Add(iIcon, index);
                 }
 
@@ -138,6 +170,5 @@ namespace Ranger
         {
             return AddPathIcon(dirPath, PathType.Directory, overlay);
         }
-
     }
 }

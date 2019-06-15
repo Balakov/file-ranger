@@ -11,7 +11,6 @@ namespace Ranger
     public partial class RangerMainForm : Form
     {
         private readonly ImageList m_smallImageList = new ImageList();
-        private readonly ImageList m_largeImageList = new ImageList();
         private IconListManager m_iconListManager;
 
         private FilePane m_activePane = null;
@@ -56,19 +55,14 @@ namespace Ranger
             RightFilePane.LoadFromConfig(m_config, "right_");
 
             m_smallImageList.ColorDepth = ColorDepth.Depth32Bit;
-            m_largeImageList.ColorDepth = ColorDepth.Depth32Bit;
 
             m_smallImageList.ImageSize = new System.Drawing.Size(16, 16);
-            m_largeImageList.ImageSize = new System.Drawing.Size(32, 32);
 
-            //m_iconListManager = new Etier.IconHelper.IconListManager(m_smallImageList, m_largeImageList);
-            m_iconListManager = new IconListManager(m_smallImageList, m_largeImageList);
+            m_iconListManager = new IconListManager(m_smallImageList);
 
             DrivesTreeView.ImageList = m_smallImageList;
             LeftFilePane.ListView.SmallImageList = m_smallImageList;
-            LeftFilePane.ListView.LargeImageList = m_largeImageList;
             RightFilePane.ListView.SmallImageList = m_smallImageList;
-            RightFilePane.ListView.LargeImageList = m_largeImageList;
 
             LeftFilePane.IconListManager = m_iconListManager;
             RightFilePane.IconListManager = m_iconListManager;
@@ -84,6 +78,12 @@ namespace Ranger
             {
                 m_viewMask |= ViewFilter.ViewMask.ShowSystem;
                 showSystemFilesToolStripMenuItem.Checked = true;
+            }
+
+            if (m_config.GetValue("showdotfiles", false.ToString()) != false.ToString())
+            {
+                m_viewMask |= ViewFilter.ViewMask.ShowDot;
+                showDotFilesToolStripMenuItem.Checked = true;
             }
 
             DefaultEditorPath = m_config.GetValue("defaulteditorpath");
@@ -121,6 +121,13 @@ namespace Ranger
             m_driveWatcher.Query = query;
             m_driveWatcher.Start();
 
+            /*
+            // Add the system recycle bin icon to the button
+            int dummyIcon;
+            var icon = Etier.IconHelper.IconReader.GetStockIcon(Etier.IconHelper.Shell32.SHSTOCKICONID.SIID_RECYCLER, out dummyIcon);
+            RecycleBinButton.Image = icon.ToBitmap();
+            */
+
             this.Closing += new System.ComponentModel.CancelEventHandler(this.MyOnClosing);
         }
 
@@ -146,6 +153,7 @@ namespace Ranger
 
             m_config.SetValue("showhiddenfiles", m_viewMask.HasFlag(ViewFilter.ViewMask.ShowHidden).ToString());
             m_config.SetValue("showsystemfiles", m_viewMask.HasFlag(ViewFilter.ViewMask.ShowSystem).ToString());
+            m_config.SetValue("showdotfiles", m_viewMask.HasFlag(ViewFilter.ViewMask.ShowDot).ToString());
 
             if (DefaultEditorPath != null)
             {
@@ -212,6 +220,7 @@ namespace Ranger
 
             TreeNode root = DrivesTreeView.Nodes.Add("Computer");
             root.Tag = new RootTag();
+            root.ImageIndex = m_iconListManager.AddStockIcon(StockIconID.DesktopPC);
 
             string firstReadyDrivePath = null;
 
@@ -224,6 +233,16 @@ namespace Ranger
                     AddDriveToTree(root, drive);
                 }
             }
+
+            // Add the recycle bin
+            /*
+            int recycleBinIconIndex = m_iconListManager.AddStockIcon(StockIconID.Recycler);
+
+            root.Nodes.Add(new TreeNode($"Recycle Bin", recycleBinIconIndex, recycleBinIconIndex)
+            {
+                Tag = new RecycleBinTag()
+            });
+            */
 
             // Re-add the bookmarks
             foreach (var bookmark in bookmarks)
@@ -458,12 +477,21 @@ namespace Ranger
                     newDir = Path.GetDirectoryName(path);
                     fileToSelect = Path.GetFileName(path);
                 }
+                else if (e.Node.Tag is RecycleBinTag)
+                {
+                    ExploreRecycleBin();
+                }
 
                 if (newDir != null)
                 {
                     m_activePane.SetDirectory(newDir, fileToSelect);
                 }
             }
+        }
+
+        private void ExploreRecycleBin()
+        {
+            System.Diagnostics.Process.Start("explorer.exe", "shell:RecycleBinFolder");
         }
 
         private void PathTextBox_KeyDown(object sender, KeyEventArgs e)
@@ -492,12 +520,13 @@ namespace Ranger
                         {
                             DirectoryInfo di = new DirectoryInfo(dir);
 
+                            string leafName = Path.GetFileName(dir);
                             Color itemColour;
-                            if (ViewFilter.FilterViewByAttributes(di.Attributes, m_viewMask, out itemColour))
+                            if (ViewFilter.FilterViewByAttributes(di.Attributes, m_viewMask, leafName.StartsWith("."), out itemColour))
                             {
                                 int folderIconIndex = m_iconListManager.AddFolderIcon(dir, false);
 
-                                TreeNode node = new TreeNode(Path.GetFileName(dir), folderIconIndex, folderIconIndex)
+                                TreeNode node = new TreeNode(leafName, folderIconIndex, folderIconIndex)
                                 {
                                     Tag = new LazyDirectoryTag(dir),
                                     ForeColor = itemColour
@@ -520,7 +549,7 @@ namespace Ranger
             }
         }
 
-        private void ShowHiddenFilesToolStripMenuItem_Click(object sender, EventArgs e)
+        private void ChangeViewFilter_Click(object sender, EventArgs e)
         {
             m_viewMask = 0;
 
@@ -532,6 +561,11 @@ namespace Ranger
             if (showHiddenFilesToolStripMenuItem.Checked)
             {
                 m_viewMask |= ViewFilter.ViewMask.ShowHidden;
+            }
+
+            if (showDotFilesToolStripMenuItem.Checked)
+            {
+                m_viewMask |= ViewFilter.ViewMask.ShowDot;
             }
 
             LeftFilePane.SetViewMask(m_viewMask);
@@ -814,5 +848,11 @@ namespace Ranger
         {
             PathTextBox.SelectAll();
         }
+
+        private void RecycleBinButton_Click(object sender, EventArgs e)
+        {
+            ExploreRecycleBin();
+        }
+
     }
 }

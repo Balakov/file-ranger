@@ -41,6 +41,8 @@
             this.toolStripSeparator1 = new System.Windows.Forms.ToolStripSeparator();
             this.ParentToolStripButton = new System.Windows.Forms.ToolStripButton();
             this.toolStripSeparator2 = new System.Windows.Forms.ToolStripSeparator();
+            this.RecycleBinButton = new System.Windows.Forms.ToolStripButton();
+            this.toolStripSeparator3 = new System.Windows.Forms.ToolStripSeparator();
             this.MyMainMenuStrip = new System.Windows.Forms.MenuStrip();
             this.fileToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.setDefaultEditorToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -49,6 +51,7 @@
             this.viewToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.showHiddenFilesToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.showSystemFilesToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.showDotFilesToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.bookmarksToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.addCurrentDirectoryToToolstripToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.addCurrentDirectoryToTreeToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -120,7 +123,9 @@
             this.ForwardToolStripButton,
             this.toolStripSeparator1,
             this.ParentToolStripButton,
-            this.toolStripSeparator2});
+            this.toolStripSeparator2,
+            this.RecycleBinButton,
+            this.toolStripSeparator3});
             this.NavigationToolStrip.Location = new System.Drawing.Point(0, 52);
             this.NavigationToolStrip.Name = "NavigationToolStrip";
             this.NavigationToolStrip.Size = new System.Drawing.Size(1249, 38);
@@ -193,6 +198,21 @@
             this.toolStripSeparator2.Name = "toolStripSeparator2";
             this.toolStripSeparator2.Size = new System.Drawing.Size(6, 38);
             // 
+            // RecycleBinButton
+            // 
+            this.RecycleBinButton.Image = ((System.Drawing.Image)(resources.GetObject("RecycleBinButton.Image")));
+            this.RecycleBinButton.ImageTransparentColor = System.Drawing.Color.Magenta;
+            this.RecycleBinButton.Name = "RecycleBinButton";
+            this.RecycleBinButton.Size = new System.Drawing.Size(71, 35);
+            this.RecycleBinButton.Text = "Recycle Bin";
+            this.RecycleBinButton.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageAboveText;
+            this.RecycleBinButton.Click += new System.EventHandler(this.RecycleBinButton_Click);
+            // 
+            // toolStripSeparator3
+            // 
+            this.toolStripSeparator3.Name = "toolStripSeparator3";
+            this.toolStripSeparator3.Size = new System.Drawing.Size(6, 38);
+            // 
             // MyMainMenuStrip
             // 
             this.MyMainMenuStrip.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
@@ -238,7 +258,8 @@
             // 
             this.viewToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.showHiddenFilesToolStripMenuItem,
-            this.showSystemFilesToolStripMenuItem});
+            this.showSystemFilesToolStripMenuItem,
+            this.showDotFilesToolStripMenuItem});
             this.viewToolStripMenuItem.Name = "viewToolStripMenuItem";
             this.viewToolStripMenuItem.Size = new System.Drawing.Size(44, 20);
             this.viewToolStripMenuItem.Text = "View";
@@ -247,17 +268,25 @@
             // 
             this.showHiddenFilesToolStripMenuItem.CheckOnClick = true;
             this.showHiddenFilesToolStripMenuItem.Name = "showHiddenFilesToolStripMenuItem";
-            this.showHiddenFilesToolStripMenuItem.Size = new System.Drawing.Size(171, 22);
+            this.showHiddenFilesToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
             this.showHiddenFilesToolStripMenuItem.Text = "Show Hidden Files";
-            this.showHiddenFilesToolStripMenuItem.Click += new System.EventHandler(this.ShowHiddenFilesToolStripMenuItem_Click);
+            this.showHiddenFilesToolStripMenuItem.Click += new System.EventHandler(this.ChangeViewFilter_Click);
             // 
             // showSystemFilesToolStripMenuItem
             // 
             this.showSystemFilesToolStripMenuItem.CheckOnClick = true;
             this.showSystemFilesToolStripMenuItem.Name = "showSystemFilesToolStripMenuItem";
-            this.showSystemFilesToolStripMenuItem.Size = new System.Drawing.Size(171, 22);
+            this.showSystemFilesToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
             this.showSystemFilesToolStripMenuItem.Text = "Show System Files";
-            this.showSystemFilesToolStripMenuItem.Click += new System.EventHandler(this.ShowHiddenFilesToolStripMenuItem_Click);
+            this.showSystemFilesToolStripMenuItem.Click += new System.EventHandler(this.ChangeViewFilter_Click);
+            // 
+            // showDotFilesToolStripMenuItem
+            // 
+            this.showDotFilesToolStripMenuItem.CheckOnClick = true;
+            this.showDotFilesToolStripMenuItem.Name = "showDotFilesToolStripMenuItem";
+            this.showDotFilesToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.showDotFilesToolStripMenuItem.Text = "Show Dot Files";
+            this.showDotFilesToolStripMenuItem.Click += new System.EventHandler(this.ChangeViewFilter_Click);
             // 
             // bookmarksToolStripMenuItem
             // 
@@ -420,6 +449,9 @@
         private System.Windows.Forms.ToolStripMenuItem bookmarksToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem addCurrentDirectoryToToolstripToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem addCurrentDirectoryToTreeToolStripMenuItem;
+        private System.Windows.Forms.ToolStripButton RecycleBinButton;
+        private System.Windows.Forms.ToolStripSeparator toolStripSeparator3;
+        private System.Windows.Forms.ToolStripMenuItem showDotFilesToolStripMenuItem;
     }
 }
 

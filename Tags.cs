@@ -53,4 +53,8 @@ namespace Ranger
     {
         public BookmarkDirectoryTag(string path) : base(path) { }
     }
+
+    public class RecycleBinTag
+    {
+    }
 }

@@ -90,16 +90,16 @@ namespace Ranger
         {
             if (disposing)
             {
-                if (components != null)
-                {
-                    components.Dispose();
-                }
-
                 m_fileWatcher.Changed -= OnFilesChanged;
                 m_fileWatcher.Created -= OnFilesChanged;
                 m_fileWatcher.Renamed -= OnFilesChanged;
                 m_fileWatcher.Deleted -= OnFilesChanged;
                 m_fileWatcher.Dispose();
+
+                if (components != null)
+                {
+                    components.Dispose();
+                }
             }
 
             base.Dispose(disposing);
@@ -273,8 +273,9 @@ namespace Ranger
                             }
                         }
 
+                        string leafName = Path.GetFileName(di.FullName);
                         Color itemColor;
-                        if (ViewFilter.FilterViewByAttributes(directoryAttribs, m_viewMask, out itemColor))
+                        if (ViewFilter.FilterViewByAttributes(directoryAttribs, m_viewMask, leafName.StartsWith("."), out itemColor))
                         {
                             string sizeString = "<folder>";
                             string attribsString = AttribsToString(directoryAttribs);
@@ -282,7 +283,7 @@ namespace Ranger
 
                             int folderIconIndex = IconListManager.AddFolderIcon(di.FullName, isShortcut);
 
-                            var lvi = new ListViewItem(new string[] { Path.GetFileName(di.FullName), sizeString, attribsString, dateString }, folderIconIndex)
+                            var lvi = new ListViewItem(new string[] { leafName, sizeString, attribsString, dateString }, folderIconIndex)
                             {
                                 Tag = new DirectoryTag(di.FullName),
                                 ForeColor = itemColor
@@ -354,13 +355,14 @@ namespace Ranger
                         {
                         }
 
+                        string leafName = Path.GetFileName(fi.FullName);
                         Color itemColour;
-                        if (ViewFilter.FilterViewByAttributes(fileAttribs, m_viewMask, out itemColour))
+                        if (ViewFilter.FilterViewByAttributes(fileAttribs, m_viewMask, leafName.StartsWith("."), out itemColour))
                         {
                             string attribsString = AttribsToString(fileAttribs);
                             bool isShortcut = Path.GetExtension(fi.FullName).ToLower() == ".lnk";
 
-                            var lvi = new ListViewItem(new string[] { Path.GetFileName(fi.FullName), sizeString, attribsString, dateString }, IconListManager.AddFileIcon(fi.FullName, isShortcut))
+                            var lvi = new ListViewItem(new string[] { leafName, sizeString, attribsString, dateString }, IconListManager.AddFileIcon(fi.FullName, isShortcut))
                             {
                                 Tag = new FileTag(fi),
                                 ForeColor = itemColour
@@ -934,7 +936,15 @@ namespace Ranger
         {
             if (e.Modifiers.HasFlag(Keys.Control))
             {
-                if (e.KeyCode == Keys.R)
+                if (e.KeyCode == Keys.Left)
+                {
+                    Back();
+                }
+                else if (e.KeyCode == Keys.Right)
+                {
+                    Forward();
+                }
+                else if (e.KeyCode == Keys.R)
                 {
                     SetDirectory(CurrentPath);
                 }
