@@ -189,6 +189,12 @@ namespace Ranger
             {
                 pathToSelect = m_pendingPathToSelect;
                 m_pendingPathToSelect = null;
+
+                // If we had a previous selection we need to clear it as we want to select a new item.
+                foreach (ListViewItem item in FileListView.SelectedItems)
+                {
+                    item.Selected = false;
+                }
             }
 
             ListViewItem dummy;
@@ -390,6 +396,14 @@ namespace Ranger
                 }
 
                 m_pendingPathToEdit = null;
+
+                FileListView.Select();
+
+                if (firstSelected != null)
+                {
+                    firstSelected.EnsureVisible();
+                    firstSelected.Focused = true;
+                }
             }
             catch (Exception e)
             {
@@ -783,6 +797,7 @@ namespace Ranger
                 (e.Effect == DragDropEffects.Copy || 
                  e.Effect == DragDropEffects.Move))
             {
+                int fileCount = paths.Count();
                 var fileOp = (e.Effect == DragDropEffects.Move) ? FileOperations.OperationType.Move :
                                                                   FileOperations.OperationType.Copy;
 
@@ -791,20 +806,28 @@ namespace Ranger
                 {
                     if (hitInfo.Item.Tag is FileTag)
                     {
-                        // Dropped onto a file - execute item with dropped files as parameters.
-                        // Abort if the dropped file is the same as the file it was dropped on
-                        string targetPath = (hitInfo.Item.Tag as FileTag).Path;
-
-                        List<string> args = new List<string>();
-                        foreach (string arg in paths)
+                        if (fileCount == 1)
                         {
-                            if (arg == targetPath)
-                                return;
+                            // Dropped onto a file - execute item with dropped files as parameters.
+                            // Abort if the dropped file is the same as the file it was dropped on
+                            string targetPath = (hitInfo.Item.Tag as FileTag).Path;
 
-                            args.Add("\"" + arg + "\"");
+                            List<string> args = new List<string>();
+                            foreach (string arg in paths)
+                            {
+                                if (arg == targetPath)
+                                    return;
+
+                                args.Add("\"" + arg + "\"");
+                            }
+
+                            FileOperations.ExecuteFile(targetPath, string.Join(" ", args));
                         }
-
-                        FileOperations.ExecuteFile(targetPath, string.Join(" ", args));
+                        else
+                        {
+                            // Multiple files dropped onto a file - assume we actually want to copy to that directoyr
+                            OnDropOrPaste(paths, CurrentPath, fileOp, FileOperations.PasteOverSelfType.NotAllowed);
+                        }
                     }
                     else if (hitInfo.Item.Tag is DirectoryTag)
                     {
@@ -1088,6 +1111,7 @@ namespace Ranger
 
                     if (!File.Exists(shortcutPath))
                     {
+                        m_pendingPathToSelect = shortcutPath;
                         var shortcut = (IWshRuntimeLibrary.IWshShortcut)shell.CreateShortcut(shortcutPath);
                         shortcut.Hotkey = "Ctrl+Shift+N";
                         shortcut.TargetPath = pathTag.Path;
