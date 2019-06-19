@@ -728,9 +728,11 @@ namespace Ranger
         private void FileListView_ItemDrag(object sender, ItemDragEventArgs e)
         {
             var dataObject = ClipboardManager.PathsToDataObject(SelectedItemsToPaths(), FileOperations.OperationType.Copy);
-            dataObject.SetData(FileListView.SelectedItems);
-
-            FileListView.DoDragDrop(dataObject, DragDropEffects.Copy | DragDropEffects.Move | DragDropEffects.Link);
+            if (dataObject != null)
+            {
+                dataObject.SetData(FileListView.SelectedItems);
+                FileListView.DoDragDrop(dataObject, DragDropEffects.Copy | DragDropEffects.Move | DragDropEffects.Link);
+            }
         }
 
         private void FileListView_DragOver(object sender, DragEventArgs e)
@@ -1022,7 +1024,9 @@ namespace Ranger
                 var items = SelectedItemsToPaths();
                 if (items.Count > 0)
                 {
-                    FileOperations.DeleteFiles(items);
+                    // Shift will delete permanently
+                    bool toRecycleBin = !e.Modifiers.HasFlag(Keys.Shift);
+                    FileOperations.DeleteFiles(items, toRecycleBin);
                 }
             }
         }

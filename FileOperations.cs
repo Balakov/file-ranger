@@ -128,7 +128,7 @@ namespace Ranger
             return success;
         }
 
-        public static void DeleteFiles(List<string> fromList)
+        public static void DeleteFiles(List<string> fromList, bool toRecycleBin)
         {
             new System.Threading.Thread(() =>
             {
@@ -138,7 +138,7 @@ namespace Ranger
                 {
                     wFunc = FILE_OP_TYPE.FO_DELETE,
                     pFrom = from,
-                    fFlags = FILE_OP_FLAGS.FOF_WANTNUKEWARNING | FILE_OP_FLAGS.FOF_ALLOWUNDO
+                    fFlags = FILE_OP_FLAGS.FOF_WANTNUKEWARNING | (toRecycleBin ? FILE_OP_FLAGS.FOF_ALLOWUNDO : 0)
                 };
 
                 SHFileOperation(ref lpFileOp);
