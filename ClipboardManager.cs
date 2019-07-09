@@ -17,7 +17,15 @@ namespace Ranger
             public FileOperations.OperationType FileOperation;
         }
 
-        public static IDataObject PathsToDataObject(IEnumerable<string> paths, FileOperations.OperationType fileOp)
+        [Flags]
+        public enum ClipboardDataTypes
+        {
+            Data  = 1 << 0,
+            Files = 1 << 1,
+            Text  = 1 << 2
+        }
+
+        public static IDataObject PathsToDataObject(IEnumerable<string> paths, FileOperations.OperationType fileOp, ClipboardDataTypes dataTypes)
         {
             if (paths.Count() == 0)
                 return null;
@@ -38,16 +46,30 @@ namespace Ranger
             }
 
             DataObject dataObject = new DataObject();
-            dataObject.SetData(pathList);
-            dataObject.SetFileDropList(fileDroplist);
-            dataObject.SetText(sb.ToString());
+
+            if (dataTypes.HasFlag(ClipboardDataTypes.Data))
+            {
+                dataObject.SetData(pathList);
+            }
+
+            if (dataTypes.HasFlag(ClipboardDataTypes.Files))
+            {
+                dataObject.SetFileDropList(fileDroplist);
+            }
+
+            if (dataTypes.HasFlag(ClipboardDataTypes.Text))
+            {
+                dataObject.SetText(sb.ToString());
+            }
 
             return dataObject;
         }
 
         public static void CopyPathsToClipboard(IEnumerable<string> paths, FileOperations.OperationType fileOp)
         {
-            var dataObject = PathsToDataObject(paths, fileOp);
+            var dataObject = PathsToDataObject(paths, fileOp, ClipboardDataTypes.Data | 
+                                                              ClipboardDataTypes.Files | 
+                                                              ClipboardDataTypes.Text);
             if (dataObject != null)
             {
                 Clipboard.SetDataObject(dataObject);

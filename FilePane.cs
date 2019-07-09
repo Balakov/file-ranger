@@ -727,7 +727,8 @@ namespace Ranger
 
         private void FileListView_ItemDrag(object sender, ItemDragEventArgs e)
         {
-            var dataObject = ClipboardManager.PathsToDataObject(SelectedItemsToPaths(), FileOperations.OperationType.Copy);
+            var dataObject = ClipboardManager.PathsToDataObject(SelectedItemsToPaths(), FileOperations.OperationType.Copy, ClipboardManager.ClipboardDataTypes.Data | 
+                                                                                                                           ClipboardManager.ClipboardDataTypes.Files);
             if (dataObject != null)
             {
                 dataObject.SetData(FileListView.SelectedItems);
@@ -762,6 +763,10 @@ namespace Ranger
                     }
                 }
             }
+            else if (e.Data.GetDataPresent("FileGroupDescriptor"))
+            {
+                e.Effect = DragDropEffects.Move;
+            }
             else
             {
                 e.Effect = DragDropEffects.None;
@@ -786,6 +791,43 @@ namespace Ranger
             else if (data.GetDataPresent(DataFormats.FileDrop))
             {
                 return (string[])data.GetData(DataFormats.FileDrop);
+            }
+            else if (data.GetDataPresent("FileGroupDescriptor"))
+            {
+                // https://stackoverflow.com/questions/33019385/c-sharp-drag-and-drop-attached-file-from-outlook-email
+                //
+                // First step here is to get the filename of the attachment and build a full-path name so we can store it
+                // in the temporary folder
+
+                MemoryStream memoryStream = (MemoryStream)data.GetData("FileGroupDescriptor");
+                byte[] fileGroupDescriptor = new byte[memoryStream.Length];
+                memoryStream.Read(fileGroupDescriptor, 0, (int)memoryStream.Length);
+                // used to build the filename from the FileGroupDescriptor block
+                StringBuilder fileName = new StringBuilder();
+                // this trick gets the filename of the passed attached file
+                for (int i=76; fileGroupDescriptor[i] != 0; i++)
+                {
+                    fileName.Append(Convert.ToChar(fileGroupDescriptor[i]));
+                }
+                memoryStream.Close();
+
+                // Second step:  we have the file name, now we need to get the actual raw data for the attached file and copy it to disk so we work on it.
+                MemoryStream dataMemoryStream = (MemoryStream)data.GetData("FileContents", true);
+                byte[] fileBytes = new byte[dataMemoryStream.Length];
+                dataMemoryStream.Read(fileBytes, 0, (int)dataMemoryStream.Length);
+
+                // Create a file and save the raw data to it
+                string filePath = Path.Combine(Path.GetTempPath(), fileName.ToString());
+                File.WriteAllBytes(filePath, fileBytes);
+
+                FileInfo tempFile = new FileInfo(filePath);
+
+                if (tempFile.Exists)
+                {
+                    return new string[] { filePath };
+                }
+
+                return new string[] { };
             }
 
             return null;
@@ -827,7 +869,7 @@ namespace Ranger
                         }
                         else
                         {
-                            // Multiple files dropped onto a file - assume we actually want to copy to that directoyr
+                            // Multiple files dropped onto a file - assume we actually want to copy to that directory
                             OnDropOrPaste(paths, CurrentPath, fileOp, FileOperations.PasteOverSelfType.NotAllowed);
                         }
                     }
@@ -943,8 +985,12 @@ namespace Ranger
             {
                 // If the common root is in the %temp% directory, don't thread the operation. This is probably a compressed
                 // file extraction or other operation that's going to clean up temp files after we return from the DragDrop.
-                FileOperations.OperationBlockingBehaviour blockingBehaviour = commonRoot.StartsWith(Path.GetTempPath()) ? FileOperations.OperationBlockingBehaviour.BlockUntilComplete :
-                                                                                                                          FileOperations.OperationBlockingBehaviour.HandOffToThread;
+
+                string tempDirectory = Path.GetTempPath();
+                string fullCommonRootPath = Path.GetFullPath(commonRoot);   // 7-Zip passes 8.3 version of temp directory
+
+                FileOperations.OperationBlockingBehaviour blockingBehaviour = fullCommonRootPath.StartsWith(tempDirectory) ? FileOperations.OperationBlockingBehaviour.BlockUntilComplete :
+                                                                                                                             FileOperations.OperationBlockingBehaviour.HandOffToThread;
 
                 if (fileOp == FileOperations.OperationType.Move)
                 {
