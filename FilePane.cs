@@ -741,13 +741,14 @@ namespace Ranger
             if (e.Data.GetDataPresent(typeof(ListView.SelectedListViewItemCollection)) ||
                 e.Data.GetDataPresent(DataFormats.FileDrop))
             {
-                IEnumerable<string> paths = PathsFromDragDropSource(e.Data);
-                if (paths != null)
+                DroppedFiles droppedData = PathsFromDragDropSource(e.Data, e.Effect);
+                if (droppedData.Files != null &&
+                    droppedData.Files.Count() > 0)
                 {
                     string currentPathRoot = Path.GetPathRoot(CurrentPath);
 
                     // If all files are on the same drive, or ALT is pressed, move the files.
-                    bool wouldMove = paths.All((x) =>
+                    bool wouldMove = droppedData.Files.All((x) =>
                     {
                         return Path.GetPathRoot(x) == currentPathRoot;
                     });
@@ -765,7 +766,7 @@ namespace Ranger
             }
             else if (e.Data.GetDataPresent("FileGroupDescriptor"))
             {
-                e.Effect = DragDropEffects.Move;
+                e.Effect = DragDropEffects.Copy;
             }
             else
             {
@@ -773,7 +774,13 @@ namespace Ranger
             }
         }
 
-        private IEnumerable<string> PathsFromDragDropSource(IDataObject data)
+        private class DroppedFiles
+        {
+            public IEnumerable<string> Files;
+            public FileOperations.OperationType FileOp;
+        }
+
+        private DroppedFiles PathsFromDragDropSource(IDataObject data, DragDropEffects effect)
         {
             if (data.GetDataPresent(typeof(ListView.SelectedListViewItemCollection)))
             {
@@ -786,11 +793,19 @@ namespace Ranger
                     }
                 }
 
-                return paths;
+                return new DroppedFiles()
+                {
+                    Files = paths,
+                    FileOp = (effect == DragDropEffects.Move) ? FileOperations.OperationType.Move : FileOperations.OperationType.Copy
+                };
             }
             else if (data.GetDataPresent(DataFormats.FileDrop))
             {
-                return (string[])data.GetData(DataFormats.FileDrop);
+                return new DroppedFiles()
+                {
+                    Files = (string[])data.GetData(DataFormats.FileDrop),
+                    FileOp = (effect == DragDropEffects.Move) ? FileOperations.OperationType.Move : FileOperations.OperationType.Copy
+                };
             }
             else if (data.GetDataPresent("FileGroupDescriptor"))
             {
@@ -824,26 +839,24 @@ namespace Ranger
 
                 if (tempFile.Exists)
                 {
-                    return new string[] { filePath };
+                    return new DroppedFiles()
+                    {
+                        Files = new string[] { filePath },
+                        FileOp = FileOperations.OperationType.Move  // Force move so we delete the temp file
+                    };
                 }
-
-                return new string[] { };
             }
 
-            return null;
+            return new DroppedFiles();
         }
 
         private void FileListView_DragDrop(object sender, DragEventArgs e)
         {
-            IEnumerable<string> paths = PathsFromDragDropSource(e.Data);
-            if (paths != null && 
-                paths.Count() > 0 && 
-                (e.Effect == DragDropEffects.Copy || 
-                 e.Effect == DragDropEffects.Move))
+            DroppedFiles droppedData = PathsFromDragDropSource(e.Data, e.Effect);
+            if (droppedData.Files != null &&
+                droppedData.Files.Count() > 0)
             {
-                int fileCount = paths.Count();
-                var fileOp = (e.Effect == DragDropEffects.Move) ? FileOperations.OperationType.Move :
-                                                                  FileOperations.OperationType.Copy;
+                int fileCount = droppedData.Files.Count();
 
                 var hitInfo = FileListView.HitTest(FileListView.PointToClient(new Point(e.X, e.Y)));
                 if (hitInfo.Item != null)
@@ -857,7 +870,7 @@ namespace Ranger
                             string targetPath = (hitInfo.Item.Tag as FileTag).Path;
 
                             List<string> args = new List<string>();
-                            foreach (string arg in paths)
+                            foreach (string arg in droppedData.Files)
                             {
                                 if (arg == targetPath)
                                     return;
@@ -870,7 +883,7 @@ namespace Ranger
                         else
                         {
                             // Multiple files dropped onto a file - assume we actually want to copy to that directory
-                            OnDropOrPaste(paths, CurrentPath, fileOp, FileOperations.PasteOverSelfType.NotAllowed);
+                            OnDropOrPaste(droppedData.Files, CurrentPath, droppedData.FileOp, FileOperations.PasteOverSelfType.NotAllowed);
                         }
                     }
                     else if (hitInfo.Item.Tag is DirectoryTag)
@@ -878,13 +891,13 @@ namespace Ranger
                         // Dropped onto a directory - copy files into directory
                         string destinationPath = (hitInfo.Item.Tag as DirectoryTag).Path;
 
-                        OnDropOrPaste(paths, destinationPath, fileOp, FileOperations.PasteOverSelfType.NotAllowed);
+                        OnDropOrPaste(droppedData.Files, destinationPath, droppedData.FileOp, FileOperations.PasteOverSelfType.NotAllowed);
                     }
                 }
                 else
                 {
                     // Dropped onto blank space - make sure we're not dropping into the same directory
-                    OnDropOrPaste(paths, CurrentPath, fileOp, FileOperations.PasteOverSelfType.NotAllowed);
+                    OnDropOrPaste(droppedData.Files, CurrentPath, droppedData.FileOp, FileOperations.PasteOverSelfType.NotAllowed);
                 }
             }
         }
