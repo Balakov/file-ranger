@@ -263,6 +263,8 @@ namespace Ranger
                         });
                     }
 
+                    var iconIndexs = IconListManager.BulkAddFolderIcons(directoryInfos);
+
                     foreach (var di in directoryInfos)
                     {
                         FileAttributes directoryAttribs = 0;
@@ -285,9 +287,9 @@ namespace Ranger
                         {
                             string sizeString = "<folder>";
                             string attribsString = AttribsToString(directoryAttribs);
-                            bool isShortcut = Path.GetExtension(di.FullName).ToLower() == ".lnk";
-
-                            int folderIconIndex = IconListManager.AddFolderIcon(di.FullName, isShortcut);
+                            //bool isShortcut = Path.GetExtension(di.FullName).ToLower() == ".lnk";
+                            //int folderIconIndex = IconListManager.AddFolderIcon(di.FullName, isShortcut);
+                            int folderIconIndex = iconIndexs[di.FullName];
 
                             var lvi = new ListViewItem(new string[] { leafName, sizeString, attribsString, dateString }, folderIconIndex)
                             {
@@ -346,6 +348,8 @@ namespace Ranger
                             break;
                     }
 
+                    var iconIndexs = IconListManager.BulkAddFileIcons(fileInfos);
+
                     foreach (var fi in fileInfos)
                     {
                         FileAttributes fileAttribs = 0;
@@ -366,9 +370,11 @@ namespace Ranger
                         if (ViewFilter.FilterViewByAttributes(fileAttribs, m_viewMask, leafName.StartsWith("."), out itemColour))
                         {
                             string attribsString = AttribsToString(fileAttribs);
-                            bool isShortcut = Path.GetExtension(fi.FullName).ToLower() == ".lnk";
+                            //bool isShortcut = Path.GetExtension(fi.FullName).ToLower() == ".lnk";
+                            //int fileIconIndex = IconListManager.AddFolderIcon(di.FullName, isShortcut);
+                            int fileIconIndex = iconIndexs[fi.FullName];
 
-                            var lvi = new ListViewItem(new string[] { leafName, sizeString, attribsString, dateString }, IconListManager.AddFileIcon(fi.FullName, isShortcut))
+                            var lvi = new ListViewItem(new string[] { leafName, sizeString, attribsString, dateString }, fileIconIndex)
                             {
                                 Tag = new FileTag(fi),
                                 ForeColor = itemColour

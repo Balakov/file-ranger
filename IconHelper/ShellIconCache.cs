@@ -26,14 +26,16 @@ namespace Ranger
         private Dictionary<string, int> m_cachedDrivePaths = new Dictionary<string, int>();
         private Dictionary<StockIconID, int> m_cachedStockIcons = new Dictionary<StockIconID, int>();
 
-        private List<ImageList> m_imageLists = new List<ImageList>();
+        private ImageList m_imageList = null;
+        private int m_imageListCount = 0;
 
         public IconListManager(ImageList smallImageList)
         {
-            m_imageLists.Add(smallImageList);
+            m_imageList = smallImageList;
+            m_imageListCount = m_imageList.Images.Count;
         }
 
-        public int AddStockIcon(StockIconID iconID)
+        public int AddStockIcon(StockIconID iconID, List<System.Drawing.Image> pendingIconsForBulkAdd = null)
         {
             int existingImageListID;
             if (m_cachedStockIcons.TryGetValue(iconID, out existingImageListID))
@@ -55,8 +57,16 @@ namespace Ranger
                 }
                 else
                 {
-                    index = m_imageLists[0].Images.Count;
-                    m_imageLists[0].Images.Add(icon);
+                    index = m_imageListCount++;
+
+                    if (pendingIconsForBulkAdd == null)
+                    {
+                        m_imageList.Images.Add(icon);
+                    }
+                    else
+                    {
+                        pendingIconsForBulkAdd.Add(icon.ToBitmap());
+                    }
 
                     m_systemIconIndices.Add(iIcon, index);
                 }
@@ -67,7 +77,7 @@ namespace Ranger
             }
         }
 
-        public int AddPathIcon(string path, PathType pathType, bool isOverlay)
+        private int AddPathIcon(string path, PathType pathType, bool isOverlay, List<System.Drawing.Image> pendingIconsForBulkAdd = null)
         {
             Dictionary<string, int> cacheToUse = null;
             string cacheKey = null;
@@ -144,8 +154,16 @@ namespace Ranger
                 }
                 else
                 {
-                    index = m_imageLists[0].Images.Count;
-                    m_imageLists[0].Images.Add(icon);
+                    index = m_imageListCount++;
+
+                    if (pendingIconsForBulkAdd == null)
+                    {
+                        m_imageList.Images.Add(icon);
+                    }
+                    else
+                    {
+                        pendingIconsForBulkAdd.Add(icon.ToBitmap());
+                    }
 
                     systemindicesToUse.Add(iIcon, index);
                 }
@@ -156,9 +174,30 @@ namespace Ranger
             }
         }
 
-        public int AddFileIcon(string drivePath, bool overlay)
+        public int AddFileIcon(string filePath, bool overlay)
         {
-            return AddPathIcon(drivePath, PathType.File, overlay);
+            return AddPathIcon(filePath, PathType.File, overlay);
+        }
+
+        public Dictionary<string, int> BulkAddFileIcons(IEnumerable<System.IO.FileInfo> fileInfos)
+        {
+            List<System.Drawing.Image> pendingIcons = new List<System.Drawing.Image>();
+            Dictionary<string, int> iconIndices = new Dictionary<string, int>();
+
+            foreach (var fi in fileInfos)
+            {
+                string path = fi.FullName;
+                bool isShortcut = System.IO.Path.GetExtension(path).ToLower() == ".lnk";
+
+                iconIndices.Add(path, AddPathIcon(path, PathType.File, isShortcut, pendingIcons));
+            }
+
+            if (pendingIcons.Count > 0)
+            {
+                m_imageList.Images.AddRange(pendingIcons.ToArray());
+            }
+
+            return iconIndices;
         }
 
         public int AddDriveIcon(string drivePath, bool overlay)
@@ -169,6 +208,27 @@ namespace Ranger
         public int AddFolderIcon(string dirPath, bool overlay)
         {
             return AddPathIcon(dirPath, PathType.Directory, overlay);
+        }
+
+        public Dictionary<string, int> BulkAddFolderIcons(IEnumerable<System.IO.DirectoryInfo> dirInfos)
+        {
+            List<System.Drawing.Image> pendingIcons = new List<System.Drawing.Image>();
+            Dictionary<string, int> iconIndices = new Dictionary<string, int>();
+
+            foreach (var di in dirInfos)
+            {
+                string path = di.FullName;
+                bool isShortcut = System.IO.Path.GetExtension(path).ToLower() == ".lnk";
+
+                iconIndices.Add(path, AddPathIcon(path, PathType.Directory, isShortcut, pendingIcons));
+            }
+
+            if (pendingIcons.Count > 0)
+            {
+                m_imageList.Images.AddRange(pendingIcons.ToArray());
+            }
+
+            return iconIndices;
         }
     }
 }
