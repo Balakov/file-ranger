@@ -1,8 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.Specialized;
 using System.IO;
 using System.Runtime.InteropServices;
 using System.Text;
+using System.Windows.Forms;
 
 namespace Ranger
 {
@@ -278,6 +280,116 @@ namespace Ranger
             public string Name;
             public string Command;
         }
+
+        [DllImport("shell32.dll", SetLastError = true)]
+        static extern int SHMultiFileProperties(IDataObject pdtobj, int flags);
+
+        //	ILCreateFromPath
+        [DllImport("shell32.dll", CharSet = CharSet.Auto)]
+        public static extern IntPtr ILCreateFromPath(string pwszPath);
+
+        //	ILFree
+        [DllImport("shell32.dll", CharSet = CharSet.None)]
+        public static extern void ILFree(IntPtr pidl);
+
+        //	ILGetSize
+        [DllImport("shell32.dll", CharSet = CharSet.None)]
+        public static extern uint ILGetSize(IntPtr pidl);
+
+        //
+        // http://www.codeproject.com/KB/files/JFileManager.aspx
+        //
+
+        public static void ShowMultiFileProperties(List<string> paths)
+        {
+            var pdtobj = new DataObject();
+            MemoryStream msLinks = FileListToShellIDListArray(paths);
+            pdtobj.SetData("Shell IDList Array", true, msLinks);
+
+            SHMultiFileProperties(pdtobj, 0);
+        }
+
+        private static object[] FileListToIDListArray(List<string> listObjects)
+        {
+            IntPtr pidl;
+            int cbPidl;
+
+            // Allocate an array of objects (byte arrays) to store the 
+            // pidl of each item in the file list
+            object[] objectArray = new object[listObjects.Count];
+            for (int count = 0; count < listObjects.Count; count++)
+            {
+                // Obtain a pidl for the file
+                pidl = ILCreateFromPath(listObjects[count]);
+
+                cbPidl = (int)ILGetSize(pidl);
+
+                // Convert the pidl to a byte array
+                objectArray[count] = (object)new byte[cbPidl];
+                Marshal.Copy(pidl, (byte[])objectArray[count], 0, cbPidl);
+
+                // Free the pidl
+                ILFree(pidl);
+            }
+            return objectArray;
+        }
+
+        private static MemoryStream FileListToShellIDListArray(List<string> listObjects)
+        {
+            int cb = 0;
+            int offset = 0;
+            int count;
+            uint pidlDesktop = 0;
+
+            object[] objectArray = null;
+            MemoryStream stream = null;
+            BinaryWriter streamWriter = null;
+
+            // Convert the array of paths to an array of pidls
+            objectArray = FileListToIDListArray(listObjects);
+
+            // Determine the amount of memory required for the CIDA
+            // The 2 in the statement below is for the offset to the 
+            // folder pidl and the count field in the CIDA structure
+            cb = offset = Marshal.SizeOf(typeof(uint)) * (objectArray.Length + 2);
+            for (count = 0; count < objectArray.Length; count++)
+            {
+                cb += ((byte[])objectArray[count]).Length; ;
+            }
+
+            // Create a memory stream that we will write the CIDA into
+            stream = new MemoryStream();
+
+            // Wrap the memory stream with a BinaryWriter object
+            streamWriter = new BinaryWriter(stream);
+
+            // Write the cidl member of the CIDA structure
+            streamWriter.Write(objectArray.Length);
+
+            // Write the array of offsets for each pidl. Calculate each offset as we go
+            streamWriter.Write(offset);
+            offset += Marshal.SizeOf(pidlDesktop);
+
+            for (count = 0; count < objectArray.Length; count++)
+            {
+                streamWriter.Write(offset);
+                offset += ((byte[])objectArray[count]).Length;
+            }
+
+            // Write the parent folder pidl
+            streamWriter.Write(pidlDesktop);
+
+            // Write the item pidls
+            for (count = 0; count < objectArray.Length; count++)
+            {
+                streamWriter.Write((byte[])objectArray[count]);
+            }
+
+            // Return the memory stream that contains the CIDA
+            return stream;
+        }
+
+
 
     }
 }

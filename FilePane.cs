@@ -7,6 +7,7 @@ using System.Linq;
 using System.Text;
 using System.Windows.Forms;
 using System.IO;
+using System.Collections.Specialized;
 
 namespace Ranger
 {
@@ -1314,6 +1315,19 @@ namespace Ranger
                     FileOperations.ShowFileProperties((selectedItem.Tag as PathTag).Path);
                 }
             }
+            else if (FileListView.SelectedItems.Count > 1)
+            {
+                List<string> items = new List<string>();
+                foreach (ListViewItem item in FileListView.SelectedItems)
+                {
+                    if (item.Tag is PathTag)
+                    {
+                        items.Add((item.Tag as PathTag).Path);
+                    }
+                }
+
+                FileOperations.ShowMultiFileProperties(items);
+            }
         }
 
         private void FileListView_AfterLabelEdit(object sender, LabelEditEventArgs e)
@@ -1376,7 +1390,7 @@ namespace Ranger
             copyToolStripMenuItem.Enabled = anyFilesSelected;
             cutToolStripMenuItem.Enabled = anyFilesSelected;
             openWithToolStripMenuItem.Enabled = singleFileSelected;
-            propertiesToolStripMenuItem.Enabled = singleFileSelected;
+            propertiesToolStripMenuItem.Enabled = anyFilesSelected;
 
             if (singleFileSelected)
             {
