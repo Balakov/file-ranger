@@ -82,6 +82,11 @@ namespace Ranger
             m_fileWatcher.Deleted += OnFilesChanged;
         }
 
+        public void ShutdownFileWatcher()
+        {
+            m_fileWatcher.EnableRaisingEvents = false;
+        }
+
         /// <summary> 
         /// Clean up any resources being used.
         /// </summary>
@@ -251,6 +256,7 @@ namespace Ranger
                             break;
                     }
 
+                    /*
                     if (parentDots == ParentDotDisplay.Enabled)
                     {
                         int folderIconIndex = IconListManager.AddFolderIcon(CurrentPath, false);
@@ -262,6 +268,7 @@ namespace Ranger
                             Tag = new ParentDirectoryTag(parentPath)
                         });
                     }
+                    */
 
                     var iconIndexs = IconListManager.BulkAddFolderIcons(directoryInfos);
 
@@ -433,6 +440,12 @@ namespace Ranger
             if (string.IsNullOrEmpty(directory))
             {
                 return false;
+            }
+
+            if (File.Exists(directory))
+            {
+                pathToSelect = directory;
+                directory = Path.GetDirectoryName(directory);
             }
 
             bool isRootUNCPath = false;
