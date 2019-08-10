@@ -7,6 +7,7 @@ using System.Linq;
 using System.Text;
 using System.Windows.Forms;
 using System.IO;
+using System.Collections.Specialized;
 
 namespace Ranger
 {
@@ -80,6 +81,11 @@ namespace Ranger
             m_fileWatcher.Created += OnFilesChanged;
             m_fileWatcher.Renamed += OnFilesChanged;
             m_fileWatcher.Deleted += OnFilesChanged;
+        }
+
+        public void ShutdownFileWatcher()
+        {
+            m_fileWatcher.EnableRaisingEvents = false;
         }
 
         /// <summary> 
@@ -251,6 +257,7 @@ namespace Ranger
                             break;
                     }
 
+                    /*
                     if (parentDots == ParentDotDisplay.Enabled)
                     {
                         int folderIconIndex = IconListManager.AddFolderIcon(CurrentPath, false);
@@ -262,6 +269,7 @@ namespace Ranger
                             Tag = new ParentDirectoryTag(parentPath)
                         });
                     }
+                    */
 
                     var iconIndexs = IconListManager.BulkAddFolderIcons(directoryInfos);
 
@@ -433,6 +441,12 @@ namespace Ranger
             if (string.IsNullOrEmpty(directory))
             {
                 return false;
+            }
+
+            if (File.Exists(directory))
+            {
+                pathToSelect = directory;
+                directory = Path.GetDirectoryName(directory);
             }
 
             bool isRootUNCPath = false;
@@ -1302,6 +1316,19 @@ namespace Ranger
                     FileOperations.ShowFileProperties((selectedItem.Tag as PathTag).Path);
                 }
             }
+            else if (FileListView.SelectedItems.Count > 1)
+            {
+                List<string> items = new List<string>();
+                foreach (ListViewItem item in FileListView.SelectedItems)
+                {
+                    if (item.Tag is PathTag)
+                    {
+                        items.Add((item.Tag as PathTag).Path);
+                    }
+                }
+
+                FileOperations.ShowMultiFileProperties(items);
+            }
         }
 
         private void FileListView_AfterLabelEdit(object sender, LabelEditEventArgs e)
@@ -1364,7 +1391,7 @@ namespace Ranger
             copyToolStripMenuItem.Enabled = anyFilesSelected;
             cutToolStripMenuItem.Enabled = anyFilesSelected;
             openWithToolStripMenuItem.Enabled = singleFileSelected;
-            propertiesToolStripMenuItem.Enabled = singleFileSelected;
+            propertiesToolStripMenuItem.Enabled = anyFilesSelected;
 
             if (singleFileSelected)
             {

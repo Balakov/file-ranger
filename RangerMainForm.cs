@@ -134,6 +134,8 @@ namespace Ranger
         private void MyOnClosing(object o, System.ComponentModel.CancelEventArgs e)
         {
             m_driveWatcher.Stop();
+            LeftFilePane.ShutdownFileWatcher();
+            RightFilePane.ShutdownFileWatcher();
 
             m_config.Clear();
 
