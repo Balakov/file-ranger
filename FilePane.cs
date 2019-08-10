@@ -524,7 +524,8 @@ namespace Ranger
                     string[] files = Directory.GetFiles(directory, "*", SearchOption.TopDirectoryOnly);
                     bool isRoot = directory.Length < 4;
 
-                    AddPathsToView(files, directories, pathToSelect, out firstSelected, isRoot ? ParentDotDisplay.Disabled : ParentDotDisplay.Enabled, DirectoryListType.Normal);
+                    AddPathsToView(files, directories, pathToSelect, out firstSelected, ParentDotDisplay.Disabled, DirectoryListType.Normal);
+                    //AddPathsToView(files, directories, pathToSelect, out firstSelected, isRoot ? ParentDotDisplay.Disabled : ParentDotDisplay.Enabled, DirectoryListType.Normal);
                 }
             }
             catch(Exception e)
