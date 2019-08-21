@@ -75,7 +75,7 @@ namespace Ranger
         {
             InitializeComponent();
 
-            m_fileWatcher.NotifyFilter = NotifyFilters.LastWrite | NotifyFilters.FileName | NotifyFilters.DirectoryName;
+            m_fileWatcher.NotifyFilter = NotifyFilters.LastWrite | NotifyFilters.FileName | NotifyFilters.DirectoryName | NotifyFilters.Size;
             m_fileWatcher.Filter = "*";
             m_fileWatcher.Changed += OnFilesChanged;
             m_fileWatcher.Created += OnFilesChanged;
@@ -1150,6 +1150,8 @@ namespace Ranger
             {
                 File.WriteAllText(newFilePath, string.Empty);
                 m_pendingPathToEdit = newFilePath;
+                m_pendingPathToSelect = newFilePath;
+                OnFilesChanged(null, null);
             }
             catch
             {
@@ -1176,6 +1178,8 @@ namespace Ranger
             {
                 Directory.CreateDirectory(newFolderPath);
                 m_pendingPathToEdit = newFolderPath;
+                m_pendingPathToSelect = newFolderPath;
+                OnFilesChanged(null, null);
             }
             catch
             {
