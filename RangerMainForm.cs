@@ -110,6 +110,9 @@ namespace Ranger
             LeftFilePane.OnSyncronisationRequested += FilePane_OnSyncronisationRequested;
             RightFilePane.OnSyncronisationRequested += FilePane_OnSyncronisationRequested;
 
+            LeftFilePane.OnSearchRequested += FilePane_OnSearchRequested;
+            RightFilePane.OnSearchRequested += FilePane_OnSearchRequested;
+
             m_activePane = LeftFilePane;
 
             RightFilePane.SetDirectory(rightDefaultPath);
@@ -405,6 +408,17 @@ namespace Ranger
             {
                 LeftFilePane.SetDirectory(m_activePane.CurrentPath, null, FilePane.GrabFocusType.NoFocusChange);
             }
+        }
+
+        private void FilePane_OnSearchRequested(object sender, EventArgs e)
+        {
+            EverythingSearchForm form = new EverythingSearchForm(OnSearchResultActivated);
+            form.Show();
+        }
+
+        private void OnSearchResultActivated(string path)
+        {
+            m_activePane.SetDirectory(Path.GetDirectoryName(path), path, FilePane.GrabFocusType.GrabFocus);
         }
 
         private void FilePane_OnPathChangedEvent(object sender, EventArgs e)

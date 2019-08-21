@@ -8,7 +8,7 @@
     <OutputType>WinExe</OutputType>
     <RootNamespace>Ranger</RootNamespace>
     <AssemblyName>Ranger</AssemblyName>
-    <TargetFrameworkVersion>v4.6.1</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.7.2</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
     <Deterministic>true</Deterministic>
@@ -94,6 +94,13 @@
   <ItemGroup>
     <Compile Include="ClipboardManager.cs" />
     <Compile Include="Config.cs" />
+    <Compile Include="Everything\Everything.cs" />
+    <Compile Include="Everything\EverythingSearchForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Everything\EverythingSearchForm.Designer.cs">
+      <DependentUpon>EverythingSearchForm.cs</DependentUpon>
+    </Compile>
     <Compile Include="FileOperations.cs" />
     <Compile Include="FilePane.cs">
       <SubType>UserControl</SubType>
@@ -128,6 +135,9 @@
       <SubType>Component</SubType>
     </Compile>
     <Compile Include="ViewFilter.cs" />
+    <EmbeddedResource Include="Everything\EverythingSearchForm.resx">
+      <DependentUpon>EverythingSearchForm.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="FilePane.resx">
       <DependentUpon>FilePane.cs</DependentUpon>
     </EmbeddedResource>
@@ -161,6 +171,9 @@
     <None Include="App.config" />
   </ItemGroup>
   <ItemGroup>
+    <Content Include="Everything32.dll">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
     <Content Include="Ranger.ico" />
   </ItemGroup>
   <ItemGroup>
@@ -174,5 +187,6 @@
       <EmbedInteropTypes>True</EmbedInteropTypes>
     </COMReference>
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

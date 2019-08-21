@@ -58,6 +58,7 @@ namespace Ranger
         public event EventHandler OnFocusEvent;
         public event EventHandler OnPathChangedEvent;
         public event EventHandler OnSyncronisationRequested;
+        public event EventHandler OnSearchRequested;
 
         private readonly FileSystemWatcher m_fileWatcher = new FileSystemWatcher();
 
@@ -1052,6 +1053,10 @@ namespace Ranger
                 else if (e.KeyCode == Keys.R)
                 {
                     SetDirectory(CurrentPath);
+                }
+                else if (e.KeyCode == Keys.F)
+                {
+                    OnSearchRequested?.Invoke(sender, e);
                 }
                 else if (e.KeyCode == Keys.A)
                 {
