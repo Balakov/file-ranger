@@ -148,35 +148,47 @@ namespace Ranger
                 }
             }
 
-            foreach (string subdirectory in Directory.GetDirectories(CurrentPath, "*", SearchOption.TopDirectoryOnly))
+            try
             {
-                string key = Path.GetFileName(subdirectory).ToLower();
+                foreach (string subdirectory in Directory.GetDirectories(CurrentPath, "*", SearchOption.TopDirectoryOnly))
+                {
+                    string key = Path.GetFileName(subdirectory).ToLower();
 
-                if (!directoriesInView.ContainsKey(key))
-                {
-                    // New directory to add
-                    directoriesToAdd.Add(subdirectory);
-                }
-                else
-                {
-                    // Mark as still present on disk by setting the ListViewItem to null
-                    directoriesInView[key] = null;
+                    if (!directoriesInView.ContainsKey(key))
+                    {
+                        // New directory to add
+                        directoriesToAdd.Add(subdirectory);
+                    }
+                    else
+                    {
+                        // Mark as still present on disk by setting the ListViewItem to null
+                        directoriesInView[key] = null;
+                    }
                 }
             }
-
-            foreach (string file in Directory.GetFiles(CurrentPath, "*", SearchOption.TopDirectoryOnly))
+            catch (Exception)
             {
-                string key = Path.GetFileName(file).ToLower();
+            }
 
-                if (!filesInView.ContainsKey(key))
+            try
+            {
+                foreach (string file in Directory.GetFiles(CurrentPath, "*", SearchOption.TopDirectoryOnly))
                 {
-                    filesToAdd.Add(file);
+                    string key = Path.GetFileName(file).ToLower();
+
+                    if (!filesInView.ContainsKey(key))
+                    {
+                        filesToAdd.Add(file);
+                    }
+                    else
+                    {
+                        // Mark as still present on disk by setting the ListViewItem to null
+                        filesInView[key] = null;
+                    }
                 }
-                else
-                {
-                    // Mark as still present on disk by setting the ListViewItem to null
-                    filesInView[key] = null;
-                }
+            }
+            catch (Exception)
+            {
             }
 
             // Find all of the items that have been deleted
