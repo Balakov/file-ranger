@@ -881,7 +881,10 @@ namespace Ranger
                 int fileCount = droppedData.Files.Count();
 
                 var hitInfo = FileListView.HitTest(FileListView.PointToClient(new Point(e.X, e.Y)));
-                if (hitInfo.Item != null)
+                    
+                // If we dropped onto a column that wasn't the filename, assume we want to copy to the current directory
+                if (hitInfo.Item != null && 
+                    hitInfo.SubItem == hitInfo.Item.SubItems[0])
                 {
                     if (hitInfo.Item.Tag is FileTag)
                     {
