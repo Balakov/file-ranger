@@ -28,7 +28,9 @@ namespace Ranger
         public static IDataObject PathsToDataObject(IEnumerable<string> paths, FileOperations.OperationType fileOp, ClipboardDataTypes dataTypes)
         {
             if (paths.Count() == 0)
+            {
                 return null;
+            }
 
             FileOperationPathList pathList = new FileOperationPathList()
             {
@@ -65,11 +67,11 @@ namespace Ranger
             return dataObject;
         }
 
-        public static void CopyPathsToClipboard(IEnumerable<string> paths, FileOperations.OperationType fileOp)
+        public static void CopyPathsToClipboard(IEnumerable<string> paths, 
+                                                FileOperations.OperationType fileOp, 
+                                                ClipboardDataTypes dataTypes = ClipboardDataTypes.Data | ClipboardDataTypes.Files | ClipboardDataTypes.Text)
         {
-            var dataObject = PathsToDataObject(paths, fileOp, ClipboardDataTypes.Data | 
-                                                              ClipboardDataTypes.Files | 
-                                                              ClipboardDataTypes.Text);
+            var dataObject = PathsToDataObject(paths, fileOp, dataTypes);
             if (dataObject != null)
             {
                 Clipboard.SetDataObject(dataObject);

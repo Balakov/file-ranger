@@ -1138,9 +1138,19 @@ namespace Ranger
 
         private void HandleCopy(bool isCut)
         {
-
-            ClipboardManager.CopyPathsToClipboard(SelectedItemsToPaths(), isCut ? FileOperations.OperationType.Move :
-                                                                                  FileOperations.OperationType.Copy);
+            var selectedPaths = SelectedItemsToPaths();
+            if (selectedPaths.Count == 0)
+            {
+                // No files selected - copy the directory name to the clipboard as text
+                ClipboardManager.CopyPathsToClipboard(new List<string>() { CurrentPath }, 
+                                                      FileOperations.OperationType.Copy, 
+                                                      ClipboardManager.ClipboardDataTypes.Text);
+            }
+            else
+            {
+                ClipboardManager.CopyPathsToClipboard(selectedPaths, isCut ? FileOperations.OperationType.Move :
+                                                                             FileOperations.OperationType.Copy);
+            }
         }
 
         private void HandlePaste()
@@ -1480,6 +1490,50 @@ namespace Ranger
                 FileTag fileTag = FileListView.SelectedItems[0].Tag as FileTag;
                 // Do NOT add quotes around the path. This makes it not work.
                 FileOperations.ExecuteFile("rundll32.exe", "shell32.dll, OpenAs_RunDLL " + fileTag.Path);
+            }
+        }
+
+        private void openCommandPromptToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            if (FileListView.SelectedItems.Count == 1 && FileListView.SelectedItems[0].Tag is DirectoryTag)
+            {
+                var path = (FileListView.SelectedItems[0].Tag as DirectoryTag).Path;
+                FileOperations.ExecuteFile("cmd.exe", null, path);
+            }
+            else
+            {
+                FileOperations.ExecuteFile("cmd.exe", null, CurrentPath);
+            }
+        }
+
+        private void recursiveFileListToClipboardToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            var pathsToSearch = new List<string>();
+
+            foreach (ListViewItem item in FileListView.SelectedItems)
+            {
+                if (item.Tag is DirectoryTag)
+                {
+                    pathsToSearch.Add((item.Tag as DirectoryTag).Path);
+                }
+            }
+
+            if (pathsToSearch.Count == 0 && CurrentPath != null)
+            {
+                pathsToSearch.Add(CurrentPath);
+            }
+
+            var files = new List<string>();
+            foreach (var path in pathsToSearch)
+            {
+                files.AddRange(Directory.GetFiles(path, "*", SearchOption.AllDirectories));
+            }
+
+            if (files.Count > 0)
+            {
+                ClipboardManager.CopyPathsToClipboard(files,
+                                                      FileOperations.OperationType.Copy,
+                                                      ClipboardManager.ClipboardDataTypes.Text);
             }
         }
     }
