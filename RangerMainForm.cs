@@ -870,5 +870,17 @@ namespace Ranger
             ExploreRecycleBin();
         }
 
+        private void OrganiseBookmarksToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            var bookmarks = new List<BookmarkTag>();
+
+            foreach (ToolStripItem item in NavigationToolStrip.Items)
+            {
+                if (item.Tag is BookmarkTag)
+                {
+                    bookmarks.Add(item.Tag as BookmarkTag);
+                }
+            }
+        }
     }
 }
