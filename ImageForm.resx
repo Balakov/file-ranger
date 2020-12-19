@@ -117,8 +117,35 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
-  <assembly alias="System.Windows.Forms" name="System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089" />
-  <data name="Folder" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Folder.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  <metadata name="ViewOptionsContextMenuStrip.TrayLocation" type="System.Drawing.Point, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
+    <value>17, 17</value>
+  </metadata>
+  <metadata name="ImageSaveFileDialog.TrayLocation" type="System.Drawing.Point, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
+    <value>237, 17</value>
+  </metadata>
+  <assembly alias="System.Drawing" name="System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a" />
+  <data name="$this.Icon" type="System.Drawing.Icon, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
+    <value>
+        AAABAAEAEBAAAAEAIABoBAAAFgAAACgAAAAQAAAAIAAAAAEAIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+        AAC4bSr/vXc5/713Of+9dzn/vXc5/713Of+9dzn/vXc5/713Of+9dzn/vXc5/713Of+9dzn/vXc5/713
+        Of+4bSr/vXc5////////////////////////////////////////////////////////////////////
+        ////////vXc5/713Of//////////////////////////////////////////////////////////////
+        /////////////713Of+9dzn/////////////////////////////////////////////////////////
+        //////////////////+9dzn/uXAu/+LEqf/9+/n/////////////////////////////////////////
+        ////////////////////////vXc5/7htKf+4bSn/wH1B/+HCpf/8+vj/////////////////////////
+        /////////////////////////////713Of+4bSn/uG0p/7htKf+4bSn/v3w//+C/of/8+ff/////////
+        //////////////////////////////bs5P+6czH/uG0p/7htKf+4bSn/uG0p/7htKf+4bSn/vno8/968
+        nv/7+PX//////////////////v7+/+TIr/+8dTX/uG0p/7htKf+4bSn/uG0p/7htKf+4bSn/uG0p/7ht
+        Kf+4bSn/vXk6/926mv/79/T/+fPu/8+cbv+4bSn/uG0p/7htKf+4bSn/uG0p/7huK//Ommz/1KiA/799
+        QP+4bSn/uG0p/7htKf+4bSn/vXc4/756Pf+4bSn/uG0p/7htKf+4bSn/uG0p/7htKf/nz7n/////////
+        ///69vL/xIVN/7htKf+4bSn/uG0p/7htKf+4bSn/uG0p/7htKf+4bSn/uG0p/7htKf/Dg0r/////////
+        /////////////+LDqP+4bSn/uG0p/7htKf+4bSn/uG0p/7htKf+4bSn/uG0p/7htKf+4bSn/w4RL////
+        ///////////////////ixKn/uG0p/7htKf+4bSn/uG0p/7htKf+4bSn/uG0p/7htKf+4bSn/uG0p/7ht
+        Kf/o0Lv////////////79/P/xIZO/7htKf+4bSn/uG0p/7htKf+4bSn/uG0p/7htKf+4bSn/uG0p/7ht
+        Kf+4bSn/uW8s/8+cbv/VqoP/wH5C/7htKf+4bSn/uG0p/7htKf+4bSn/uG0p/7htKf+4bSn/uG0p/7ht
+        Kf+4bSn/uG0p/7htKf+4bSn/uG0p/7htKf+4bSn/uG0p/7htKf+4bSn/uG0p/7htKf+4bSn/uG0p/7ht
+        Kf+4bSn/AACsQQAArEEAAKxBAACsQQAArEEAAKxBAACsQQAArEEAAKxBAACsQQAArEEAAKxBAACsQQAA
+        rEEAAKxBAACsQQ==
+</value>
   </data>
 </root>

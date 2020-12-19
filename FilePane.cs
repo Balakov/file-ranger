@@ -52,6 +52,9 @@ namespace Ranger
 
         public ListView ListView { get { return FileListView; } }
 
+        public IWindowManager WindowManager { get;  set; }
+        public string[] SupportedImageExtensions { get; set; } = new string[0];
+
         public string CurrentPath { get; private set; }
         private ulong m_currentDriveFreeSpace = 0;
 
@@ -728,7 +731,16 @@ namespace Ranger
                 else if(selectedItem.Tag is FileTag)
                 {
                     string path = (selectedItem.Tag as FileTag).Path;
-                    FileOperations.ExecuteFile(path);
+
+                    // If this is an image file then use the internal viewer
+                    if (SupportedImageExtensions.Contains(Path.GetExtension(path).ToLower()))
+                    {
+                        WindowManager?.OpenImageWindow(path);
+                    }
+                    else
+                    {
+                        FileOperations.ExecuteFile(path);
+                    }
                 }
             }
         }
@@ -1440,12 +1452,12 @@ namespace Ranger
 
         private void EditToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            if (RangerMainForm.DefaultEditorPath == null || !File.Exists(RangerMainForm.DefaultEditorPath))
+            if (RangerForm.DefaultEditorPath == null || !File.Exists(RangerForm.DefaultEditorPath))
             {
-                RangerMainForm.TriggerDefaultEditorSelect();
+                RangerForm.TriggerDefaultEditorSelect();
             }
 
-            if (RangerMainForm.DefaultEditorPath != null && File.Exists(RangerMainForm.DefaultEditorPath))
+            if (RangerForm.DefaultEditorPath != null && File.Exists(RangerForm.DefaultEditorPath))
             {
                 List<string> selectedPaths = new List<string>();
 
@@ -1457,7 +1469,7 @@ namespace Ranger
                     }
                 }
 
-                FileOperations.ExecuteFile(RangerMainForm.DefaultEditorPath, string.Join(" ", selectedPaths));
+                FileOperations.ExecuteFile(RangerForm.DefaultEditorPath, string.Join(" ", selectedPaths));
             }
         }
 

@@ -1,6 +1,6 @@
 ﻿namespace Ranger
 {
-    partial class RangerMainForm
+    partial class RangerForm
     {
         /// <summary>
         /// Required designer variable.
@@ -29,7 +29,7 @@
         private void InitializeComponent()
         {
             this.components = new System.ComponentModel.Container();
-            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(RangerMainForm));
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(RangerForm));
             this.MainSplitContainer = new System.Windows.Forms.SplitContainer();
             this.PathTextBox = new System.Windows.Forms.TextBox();
             this.NavigationToolStrip = new System.Windows.Forms.ToolStrip();

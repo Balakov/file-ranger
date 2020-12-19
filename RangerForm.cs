@@ -8,7 +8,7 @@ using System.Collections.Generic;
 
 namespace Ranger
 {
-    public partial class RangerMainForm : Form
+    public partial class RangerForm : Form
     {
         private readonly ImageList m_smallImageList = new ImageList();
         private IconListManager m_iconListManager;
@@ -21,7 +21,11 @@ namespace Ranger
         public static string DefaultEditorPath { get; private set; }
 
         private readonly Config m_config = new Config();
-        private static RangerMainForm s_instance = null;
+        private static RangerForm s_instance = null;
+
+        private IWindowManager m_windowManager;
+        private readonly string[] m_supportedImageExtensions;
+
 
         private bool m_preventDirectoryChangeEventOnTreeNodeSelect = false;
 
@@ -37,9 +41,18 @@ namespace Ranger
             TreeView
         }
 
-        public RangerMainForm()
+        public RangerForm()
         {
             s_instance = this;
+
+            InitializeComponent();
+        }
+
+        public RangerForm(string path, Config config, string[] supportedImageExtensions, ThumbnailCache thumbnailCache, IWindowManager windowManager)
+        {
+            s_instance = this;
+            m_windowManager = windowManager;
+            m_supportedImageExtensions = supportedImageExtensions;
 
             InitializeComponent();
         }
@@ -51,21 +64,22 @@ namespace Ranger
 
             LayoutFromConfig();
 
-            LeftFilePane.LoadFromConfig(m_config, "left_");
-            RightFilePane.LoadFromConfig(m_config, "right_");
-
             m_smallImageList.ColorDepth = ColorDepth.Depth32Bit;
-
             m_smallImageList.ImageSize = new System.Drawing.Size(16, 16);
-
             m_iconListManager = new IconListManager(m_smallImageList);
-
             DrivesTreeView.ImageList = m_smallImageList;
-            LeftFilePane.ListView.SmallImageList = m_smallImageList;
-            RightFilePane.ListView.SmallImageList = m_smallImageList;
 
+            LeftFilePane.LoadFromConfig(m_config, "left_");
+            LeftFilePane.ListView.SmallImageList = m_smallImageList;
             LeftFilePane.IconListManager = m_iconListManager;
+            LeftFilePane.SupportedImageExtensions = m_supportedImageExtensions;
+            LeftFilePane.WindowManager = m_windowManager;
+
+            RightFilePane.LoadFromConfig(m_config, "right_");
+            RightFilePane.ListView.SmallImageList = m_smallImageList;
             RightFilePane.IconListManager = m_iconListManager;
+            RightFilePane.SupportedImageExtensions = m_supportedImageExtensions;
+            RightFilePane.WindowManager = m_windowManager;
 
             // View Mask
             if (m_config.GetValue("showhiddenfiles", false.ToString()) != false.ToString())
@@ -202,6 +216,8 @@ namespace Ranger
             RightFilePane.SaveToConfig(m_config, "right_");
 
             m_config.Save();
+
+            m_windowManager.ClosingRangerWindow(this);
         }
 
         private string BuildDrivesTreeView()
