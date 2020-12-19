@@ -244,7 +244,6 @@ namespace Ranger
                     NextFile();
                     break;
                 case Keys.Space:
-                case Keys.Enter:
                     if (e.Shift)
                     {
                         PreviousFile();
