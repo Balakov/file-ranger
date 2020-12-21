@@ -7,11 +7,10 @@ using System.Linq;
 using System.Text;
 using System.Windows.Forms;
 using System.IO;
-using System.Collections.Specialized;
 
 namespace Ranger
 {
-    public partial class FilePane : UserControl
+    public partial class FilePane : UserControl, ThumbnailCreator.IAddThumbnail
     {
         public enum SortStyle
         {
@@ -50,10 +49,8 @@ namespace Ranger
 
         private ViewFilter.ViewMask m_viewMask = 0;
 
-        public ListView ListView { get { return FileListView; } }
-
-        public IWindowManager WindowManager { get;  set; }
-        public string[] SupportedImageExtensions { get; set; } = new string[0];
+        private IWindowManager m_windowManager { get;  set; }
+        private string[] m_supportedImageExtensions { get; set; } = new string[0];
 
         public string CurrentPath { get; private set; }
         private ulong m_currentDriveFreeSpace = 0;
@@ -65,8 +62,7 @@ namespace Ranger
 
         private readonly FileSystemWatcher m_fileWatcher = new FileSystemWatcher();
 
-        //public Etier.IconHelper.IconListManager IconListManager { private get; set; }
-        public IconListManager IconListManager { private get; set; }
+        private IconListManager m_iconListManager;
 
         private readonly char[] m_invalidFilenmameChars = Path.GetInvalidFileNameChars();
 
@@ -74,6 +70,12 @@ namespace Ranger
         private string m_pendingPathToSelect = null;
 
         private readonly PathHistory m_history = new PathHistory();
+
+        private ThumbnailCreator m_thumbnailCreator;
+        private ThumbnailCache m_thumbnailCache;
+
+        private const int c_thumbnailWidth = 180;
+        private const int c_thumbnailHeight = 100;
 
         public FilePane()
         {
@@ -85,6 +87,19 @@ namespace Ranger
             m_fileWatcher.Created += OnFilesChanged;
             m_fileWatcher.Renamed += OnFilesChanged;
             m_fileWatcher.Deleted += OnFilesChanged;
+        }
+
+        public void Initialise(ImageList smallImageList, 
+                               IconListManager iconListManager, 
+                               string[] supportedImageExtensions, 
+                               IWindowManager windowManager,
+                               ThumbnailCache thumbnailCache)
+        {
+            FileListView.SmallImageList = smallImageList;
+            m_iconListManager = iconListManager;
+            m_supportedImageExtensions = supportedImageExtensions;
+            m_windowManager = windowManager;
+            m_thumbnailCache = thumbnailCache;
         }
 
         public void ShutdownFileWatcher()
@@ -153,7 +168,7 @@ namespace Ranger
 
             try
             {
-                foreach (string subdirectory in Directory.GetDirectories(CurrentPath, "*", SearchOption.TopDirectoryOnly))
+                foreach (string subdirectory in Directory.EnumerateDirectories(CurrentPath, "*", SearchOption.TopDirectoryOnly))
                 {
                     string key = Path.GetFileName(subdirectory).ToLower();
 
@@ -175,7 +190,7 @@ namespace Ranger
 
             try
             {
-                foreach (string file in Directory.GetFiles(CurrentPath, "*", SearchOption.TopDirectoryOnly))
+                foreach (string file in Directory.EnumerateFiles(CurrentPath, "*", SearchOption.TopDirectoryOnly))
                 {
                     string key = Path.GetFileName(file).ToLower();
 
@@ -241,6 +256,19 @@ namespace Ranger
             {
                 ListViewItem pendingItemToEdit = null;
 
+                if (m_thumbnailCreator != null)
+                {
+                    m_thumbnailCreator.Abort();
+                }
+
+                var oldImageList = FileListView.LargeImageList;
+                FileListView.LargeImageList = null;
+
+                if (oldImageList != null)
+                {
+                    oldImageList.Dispose();
+                }
+
                 // Directories
                 {
                     List<DirectoryInfo> directoryInfos = new List<DirectoryInfo>();
@@ -287,7 +315,13 @@ namespace Ranger
                     }
                     */
 
-                    var iconIndexs = IconListManager.BulkAddFolderIcons(directoryInfos);
+                    // Only create file icon if we're not viewing thumbnails
+                    Dictionary<string, int> iconIndexes = null;
+
+                    if (FileListView.View != View.LargeIcon)
+                    {
+                        iconIndexes = m_iconListManager.BulkAddFolderIcons(directoryInfos);
+                    }
 
                     foreach (var di in directoryInfos)
                     {
@@ -313,7 +347,7 @@ namespace Ranger
                             string attribsString = AttribsToString(directoryAttribs);
                             //bool isShortcut = Path.GetExtension(di.FullName).ToLower() == ".lnk";
                             //int folderIconIndex = IconListManager.AddFolderIcon(di.FullName, isShortcut);
-                            int folderIconIndex = iconIndexs[di.FullName];
+                            int folderIconIndex = (iconIndexes != null) ? iconIndexes[di.FullName] : -1;
 
                             var lvi = new ListViewItem(new string[] { leafName, sizeString, attribsString, dateString }, folderIconIndex)
                             {
@@ -372,7 +406,13 @@ namespace Ranger
                             break;
                     }
 
-                    var iconIndexs = IconListManager.BulkAddFileIcons(fileInfos);
+                    // Only create file icon if we're not viewing thumbnails
+                    Dictionary<string, int> iconIndexes = null;
+
+                    if (FileListView.View != View.LargeIcon)
+                    {
+                        iconIndexes = m_iconListManager.BulkAddFileIcons(fileInfos);
+                    }
 
                     foreach (var fi in fileInfos)
                     {
@@ -396,7 +436,7 @@ namespace Ranger
                             string attribsString = AttribsToString(fileAttribs);
                             //bool isShortcut = Path.GetExtension(fi.FullName).ToLower() == ".lnk";
                             //int fileIconIndex = IconListManager.AddFolderIcon(di.FullName, isShortcut);
-                            int fileIconIndex = iconIndexs[fi.FullName];
+                            int fileIconIndex = (iconIndexes != null) ? iconIndexes[fi.FullName] : -1;
 
                             var lvi = new ListViewItem(new string[] { leafName, sizeString, attribsString, dateString }, fileIconIndex)
                             {
@@ -420,14 +460,47 @@ namespace Ranger
                     }
                 }
 
+                // Thumbnail view
+                if (FileListView.View == View.LargeIcon)
+                {
+                    var imageList = new ImageList();
+                    imageList.ImageSize = new Size(c_thumbnailWidth, c_thumbnailHeight);
+                    imageList.ColorDepth = ColorDepth.Depth32Bit;
+
+                    FileListView.LargeImageList = imageList;
+
+                    // When we're doing an update rather than a full scan we'll mess up the thumbnail image list if
+                    // we kick off thumbnail creation on only the newly added files. Re calculate the whole image list
+                    // It should be quick as all of the previous items will still be in the cache.
+                    var allFiles = new List<string>();
+                    foreach (ListViewItem lvi in FileListView.Items)
+                    {
+                        lvi.ImageIndex = -1;
+
+                        if (lvi.Tag is FileTag)
+                        {
+                            allFiles.Add((lvi.Tag as FileTag).Path);
+                        }
+                        else
+                        {
+                            // Null will translate into a folder icon in the thumbnail creator.
+                            allFiles.Add(null);
+                        }
+                    }
+
+                    m_thumbnailCreator = new ThumbnailCreator(allFiles, this, c_thumbnailWidth, c_thumbnailHeight, imageList, m_thumbnailCache);
+                }
+                else
+                {
+                    m_thumbnailCreator = null;
+                }
+
                 if (pendingItemToEdit != null)
                 {
                     pendingItemToEdit.BeginEdit();
                 }
 
                 m_pendingPathToEdit = null;
-
-                FileListView.Select();
 
                 if (firstSelected != null)
                 {
@@ -550,13 +623,15 @@ namespace Ranger
                 }
                 else
                 {
-                    string[] directories = Directory.GetDirectories(directory, "*", SearchOption.TopDirectoryOnly);
-                    string[] files = Directory.GetFiles(directory, "*", SearchOption.TopDirectoryOnly);
+                    IEnumerable<string> directories = Directory.EnumerateDirectories(directory, "*", SearchOption.TopDirectoryOnly);
+                    IEnumerable<string> files = Directory.EnumerateFiles(directory, "*", SearchOption.TopDirectoryOnly);
                     bool isRoot = directory.Length < 4;
 
                     AddPathsToView(files, directories, pathToSelect, out firstSelected, ParentDotDisplay.Disabled, DirectoryListType.Normal);
                     //AddPathsToView(files, directories, pathToSelect, out firstSelected, isRoot ? ParentDotDisplay.Disabled : ParentDotDisplay.Enabled, DirectoryListType.Normal);
                 }
+
+                FileListView.Select();
             }
             catch(Exception e)
             {
@@ -733,9 +808,9 @@ namespace Ranger
                     string path = (selectedItem.Tag as FileTag).Path;
 
                     // If this is an image file then use the internal viewer
-                    if (SupportedImageExtensions.Contains(Path.GetExtension(path).ToLower()))
+                    if (m_supportedImageExtensions.Contains(Path.GetExtension(path).ToLower()))
                     {
-                        WindowManager?.OpenImageWindow(path);
+                        m_windowManager?.OpenImageWindow(path);
                     }
                     else
                     {
@@ -1489,6 +1564,33 @@ namespace Ranger
             ModifiedColumnHeader.Width = Convert.ToInt32(config.GetValue(prefix + "modifiedcolumnwidth", ModifiedColumnHeader.Width.ToString()));
         }
 
+        public void AddThumbnail(Image image, int index, ImageList currentImageList)
+        {
+            try
+            {
+                if (InvokeRequired)
+                {
+                    Invoke((MethodInvoker)delegate { AddThumbnail(image, index, currentImageList); });
+                }
+                else
+                {
+                    // If the previous thumbnail creation was still going on we may get
+                    // messages back from that thread. We don't want it messing with our
+                    // new image list.
+                    if (currentImageList == FileListView.LargeImageList)
+                    {
+                        FileListView.LargeImageList.Images.Add(image);
+                        FileListView.Items[index].ImageIndex = index;
+                    }
+
+                    // Do not dispose the image as it's owned by the thumbnail cache
+                }
+            }
+            catch
+            {
+            }
+        }
+
         private void StatusBarRefreshTimer_Tick(object sender, EventArgs e)
         {
             StatusBarRefreshTimer.Stop();
@@ -1538,7 +1640,7 @@ namespace Ranger
             var files = new List<string>();
             foreach (var path in pathsToSearch)
             {
-                files.AddRange(Directory.GetFiles(path, "*", SearchOption.AllDirectories));
+                files.AddRange(Directory.EnumerateFiles(path, "*", SearchOption.AllDirectories));
             }
 
             if (files.Count > 0)
@@ -1547,6 +1649,20 @@ namespace Ranger
                                                       FileOperations.OperationType.Copy,
                                                       ClipboardManager.ClipboardDataTypes.Text);
             }
+        }
+
+        private void thumbnailsToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            if ((sender as ToolStripMenuItem).Checked)
+            {
+                FileListView.View = View.LargeIcon;
+            }
+            else
+            {
+                FileListView.View = View.Details;
+            }
+
+            SetDirectory(CurrentPath);
         }
     }
 }

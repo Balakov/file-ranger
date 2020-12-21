@@ -26,6 +26,7 @@ namespace Ranger
         private IWindowManager m_windowManager;
         private readonly string[] m_supportedImageExtensions;
 
+        private ThumbnailCache m_thumbnailCache;
 
         private bool m_preventDirectoryChangeEventOnTreeNodeSelect = false;
 
@@ -53,6 +54,7 @@ namespace Ranger
             s_instance = this;
             m_windowManager = windowManager;
             m_supportedImageExtensions = supportedImageExtensions;
+            m_thumbnailCache = thumbnailCache;
 
             InitializeComponent();
         }
@@ -70,16 +72,18 @@ namespace Ranger
             DrivesTreeView.ImageList = m_smallImageList;
 
             LeftFilePane.LoadFromConfig(m_config, "left_");
-            LeftFilePane.ListView.SmallImageList = m_smallImageList;
-            LeftFilePane.IconListManager = m_iconListManager;
-            LeftFilePane.SupportedImageExtensions = m_supportedImageExtensions;
-            LeftFilePane.WindowManager = m_windowManager;
+            LeftFilePane.Initialise(m_smallImageList, m_iconListManager, m_supportedImageExtensions, m_windowManager, m_thumbnailCache);
+            //LeftFilePane.ListView.SmallImageList = m_smallImageList;
+            //LeftFilePane.IconListManager = m_iconListManager;
+            //LeftFilePane.SupportedImageExtensions = m_supportedImageExtensions;
+            //LeftFilePane.WindowManager = m_windowManager;
 
             RightFilePane.LoadFromConfig(m_config, "right_");
-            RightFilePane.ListView.SmallImageList = m_smallImageList;
-            RightFilePane.IconListManager = m_iconListManager;
-            RightFilePane.SupportedImageExtensions = m_supportedImageExtensions;
-            RightFilePane.WindowManager = m_windowManager;
+            RightFilePane.Initialise(m_smallImageList, m_iconListManager, m_supportedImageExtensions, m_windowManager, m_thumbnailCache);
+            //RightFilePane.ListView.SmallImageList = m_smallImageList;
+            //RightFilePane.IconListManager = m_iconListManager;
+            //RightFilePane.SupportedImageExtensions = m_supportedImageExtensions;
+            //RightFilePane.WindowManager = m_windowManager;
 
             // View Mask
             if (m_config.GetValue("showhiddenfiles", false.ToString()) != false.ToString())
@@ -546,7 +550,7 @@ namespace Ranger
                 // Evaulate all of the directories in the new path
                 try
                 {
-                    foreach (string dir in Directory.GetDirectories(newDir).OrderBy(x => x))
+                    foreach (string dir in Directory.EnumerateDirectories(newDir).OrderBy(x => x))
                     {
                         try
                         {
