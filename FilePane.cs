@@ -982,40 +982,42 @@ namespace Ranger
                 var hitInfo = FileListView.HitTest(FileListView.PointToClient(new Point(e.X, e.Y)));
                     
                 // If we dropped onto a column that wasn't the filename, assume we want to copy to the current directory
-                if (hitInfo.Item != null && 
-                    hitInfo.SubItem == hitInfo.Item.SubItems[0])
+                if (hitInfo.Item != null)
                 {
-                    if (hitInfo.Item.Tag is FileTag)
+                    if (hitInfo.SubItem == hitInfo.Item.SubItems[0] || FileListView.View == View.LargeIcon)
                     {
-                        if (fileCount == 1)
+                        if (hitInfo.Item.Tag is FileTag)
                         {
-                            // Dropped onto a file - execute item with dropped files as parameters.
-                            // Abort if the dropped file is the same as the file it was dropped on
-                            string targetPath = (hitInfo.Item.Tag as FileTag).Path;
-
-                            List<string> args = new List<string>();
-                            foreach (string arg in droppedData.Files)
+                            if (fileCount == 1)
                             {
-                                if (arg == targetPath)
-                                    return;
+                                // Dropped onto a file - execute item with dropped files as parameters.
+                                // Abort if the dropped file is the same as the file it was dropped on
+                                string targetPath = (hitInfo.Item.Tag as FileTag).Path;
 
-                                args.Add("\"" + arg + "\"");
+                                List<string> args = new List<string>();
+                                foreach (string arg in droppedData.Files)
+                                {
+                                    if (arg == targetPath)
+                                        return;
+
+                                    args.Add("\"" + arg + "\"");
+                                }
+
+                                FileOperations.ExecuteFile(targetPath, string.Join(" ", args));
                             }
-
-                            FileOperations.ExecuteFile(targetPath, string.Join(" ", args));
+                            else
+                            {
+                                // Multiple files dropped onto a file - assume we actually want to copy to that directory
+                                OnDropOrPaste(droppedData.Files, CurrentPath, droppedData.FileOp, FileOperations.PasteOverSelfType.NotAllowed);
+                            }
                         }
-                        else
+                        else if (hitInfo.Item.Tag is DirectoryTag)
                         {
-                            // Multiple files dropped onto a file - assume we actually want to copy to that directory
-                            OnDropOrPaste(droppedData.Files, CurrentPath, droppedData.FileOp, FileOperations.PasteOverSelfType.NotAllowed);
-                        }
-                    }
-                    else if (hitInfo.Item.Tag is DirectoryTag)
-                    {
-                        // Dropped onto a directory - copy files into directory
-                        string destinationPath = (hitInfo.Item.Tag as DirectoryTag).Path;
+                            // Dropped onto a directory - copy files into directory
+                            string destinationPath = (hitInfo.Item.Tag as DirectoryTag).Path;
 
-                        OnDropOrPaste(droppedData.Files, destinationPath, droppedData.FileOp, FileOperations.PasteOverSelfType.NotAllowed);
+                            OnDropOrPaste(droppedData.Files, destinationPath, droppedData.FileOp, FileOperations.PasteOverSelfType.NotAllowed);
+                        }
                     }
                 }
                 else

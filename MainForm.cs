@@ -34,6 +34,7 @@ namespace Ranger
             ".ico",
             ".jpeg",
             ".jpg",
+            ".jfif",
             ".png",
             ".pcx",
             //".pdf",
