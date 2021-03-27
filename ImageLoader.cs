@@ -18,7 +18,11 @@ namespace Ranger
                 }
             }
 
-            if (Path.GetExtension(path).ToLower() == ".afdesign")
+            string extension = Path.GetExtension(path).ToLower();
+
+            if (extension == ".afdesign" ||
+                extension == ".afpub" ||
+                extension == ".afphoto")
             {
                 var bytes = File.ReadAllBytes(path);
                 byte[] header = { 137, 80, 78, 71, 13, 10, 26, 10 };

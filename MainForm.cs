@@ -26,6 +26,9 @@ namespace Ranger
         private readonly string[] m_supportedExtensions =
         {
             ".afdesign",
+            ".afpub",
+            ".afphoto",
+            ".webp",
             ".bmp",
             ".dds",
             ".emf",
