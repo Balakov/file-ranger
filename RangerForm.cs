@@ -779,14 +779,7 @@ namespace Ranger
                 {
                     ContextMenuStrip contextMenu = item.Owner as ContextMenuStrip;
 
-                    if (contextMenu.Tag is ToolStripButtonWithContextMenu)
-                    {
-                        var button = contextMenu.Tag as ToolStripButtonWithContextMenu;
-
-                        UIItem = button;
-                        return button.Tag as BookmarkTag;
-                    }
-                    else if (contextMenu.SourceControl is TreeView)
+                    if (contextMenu.SourceControl is TreeView)
                     {
                         TreeView tree = contextMenu.SourceControl as TreeView;
                         if (tree.SelectedNode.Tag is BookmarkTag)
@@ -794,6 +787,13 @@ namespace Ranger
                             UIItem = tree.SelectedNode;
                             return tree.SelectedNode.Tag as BookmarkTag;
                         }
+                    } 
+                    else if (contextMenu.Tag is ToolStripButtonWithContextMenu)
+                    {
+                        var button = contextMenu.Tag as ToolStripButtonWithContextMenu;
+
+                        UIItem = button;
+                        return button.Tag as BookmarkTag;
                     }
                 }
             }
@@ -900,6 +900,11 @@ namespace Ranger
                 {
                     bookmarks.Add(item.Tag as BookmarkTag);
                 }
+            }
+
+            OrganiseBookmarksForm form = new OrganiseBookmarksForm();
+            if (form.ShowDialog(this) == DialogResult.OK)
+            {
             }
         }
     }

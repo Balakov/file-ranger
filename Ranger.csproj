@@ -100,6 +100,12 @@
       <SubType>Form</SubType>
     </Compile>
     <Compile Include="NetworkShares\Shares.cs" />
+    <Compile Include="OrganiseBookmarksForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="OrganiseBookmarksForm.Designer.cs">
+      <DependentUpon>OrganiseBookmarksForm.cs</DependentUpon>
+    </Compile>
     <Compile Include="PathHistory.cs" />
     <Compile Include="RangerForm.cs">
       <SubType>Form</SubType>
@@ -127,6 +133,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="FilePane.resx">
       <DependentUpon>FilePane.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="OrganiseBookmarksForm.resx">
+      <DependentUpon>OrganiseBookmarksForm.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="RangerForm.resx">
       <DependentUpon>RangerForm.cs</DependentUpon>
