@@ -36,6 +36,8 @@
             this.BookmarksContextMenuStrip = new System.Windows.Forms.ContextMenuStrip(this.components);
             this.deleteToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.renameToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.toolStripMenuItem2 = new System.Windows.Forms.ToolStripSeparator();
+            this.organiseBookmarksToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.BackToolStripButton = new System.Windows.Forms.ToolStripButton();
             this.ForwardToolStripButton = new System.Windows.Forms.ToolStripButton();
             this.toolStripSeparator1 = new System.Windows.Forms.ToolStripSeparator();
@@ -58,11 +60,9 @@
             this.FilePaneSplitContainer = new System.Windows.Forms.SplitContainer();
             this.DrivesTreeView = new System.Windows.Forms.TreeView();
             this.splitContainer3 = new System.Windows.Forms.SplitContainer();
-            this.SetEditorFileDialog = new System.Windows.Forms.OpenFileDialog();
             this.LeftFilePane = new Ranger.FilePane();
             this.RightFilePane = new Ranger.FilePane();
-            this.organiseBookmarksToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.toolStripMenuItem2 = new System.Windows.Forms.ToolStripSeparator();
+            this.SetEditorFileDialog = new System.Windows.Forms.OpenFileDialog();
             ((System.ComponentModel.ISupportInitialize)(this.MainSplitContainer)).BeginInit();
             this.MainSplitContainer.Panel1.SuspendLayout();
             this.MainSplitContainer.Panel2.SuspendLayout();
@@ -145,7 +145,7 @@
             this.toolStripMenuItem2,
             this.organiseBookmarksToolStripMenuItem});
             this.BookmarksContextMenuStrip.Name = "BookmarksContextMenuStrip";
-            this.BookmarksContextMenuStrip.Size = new System.Drawing.Size(193, 98);
+            this.BookmarksContextMenuStrip.Size = new System.Drawing.Size(193, 76);
             this.BookmarksContextMenuStrip.Opening += new System.ComponentModel.CancelEventHandler(this.BookmarksContextMenuStrip_Opening);
             // 
             // deleteToolStripMenuItem
@@ -159,8 +159,20 @@
             // 
             this.renameToolStripMenuItem.Name = "renameToolStripMenuItem";
             this.renameToolStripMenuItem.Size = new System.Drawing.Size(192, 22);
-            this.renameToolStripMenuItem.Text = "Rename Bookmark...";
+            this.renameToolStripMenuItem.Text = "Edit Bookmark...";
             this.renameToolStripMenuItem.Click += new System.EventHandler(this.RenameToolStripMenuItem_Click);
+            // 
+            // toolStripMenuItem2
+            // 
+            this.toolStripMenuItem2.Name = "toolStripMenuItem2";
+            this.toolStripMenuItem2.Size = new System.Drawing.Size(189, 6);
+            // 
+            // organiseBookmarksToolStripMenuItem
+            // 
+            this.organiseBookmarksToolStripMenuItem.Name = "organiseBookmarksToolStripMenuItem";
+            this.organiseBookmarksToolStripMenuItem.Size = new System.Drawing.Size(192, 22);
+            this.organiseBookmarksToolStripMenuItem.Text = "Organise Bookmarks...";
+            this.organiseBookmarksToolStripMenuItem.Click += new System.EventHandler(this.OrganiseBookmarksToolStripMenuItem_Click);
             // 
             // BackToolStripButton
             // 
@@ -370,10 +382,6 @@
             this.splitContainer3.TabIndex = 0;
             this.splitContainer3.TabStop = false;
             // 
-            // SetEditorFileDialog
-            // 
-            this.SetEditorFileDialog.FileName = "openFileDialog1";
-            // 
             // LeftFilePane
             // 
             this.LeftFilePane.Dock = System.Windows.Forms.DockStyle.Fill;
@@ -390,19 +398,11 @@
             this.RightFilePane.Size = new System.Drawing.Size(516, 748);
             this.RightFilePane.TabIndex = 0;
             // 
-            // organiseBookmarksToolStripMenuItem
+            // SetEditorFileDialog
             // 
-            this.organiseBookmarksToolStripMenuItem.Name = "organiseBookmarksToolStripMenuItem";
-            this.organiseBookmarksToolStripMenuItem.Size = new System.Drawing.Size(192, 22);
-            this.organiseBookmarksToolStripMenuItem.Text = "Organise Bookmarks...";
-            this.organiseBookmarksToolStripMenuItem.Click += new System.EventHandler(this.OrganiseBookmarksToolStripMenuItem_Click);
+            this.SetEditorFileDialog.FileName = "openFileDialog1";
             // 
-            // toolStripMenuItem2
-            // 
-            this.toolStripMenuItem2.Name = "toolStripMenuItem2";
-            this.toolStripMenuItem2.Size = new System.Drawing.Size(189, 6);
-            // 
-            // RangerMainForm
+            // RangerForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
@@ -410,7 +410,7 @@
             this.Controls.Add(this.MainSplitContainer);
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.MainMenuStrip = this.MyMainMenuStrip;
-            this.Name = "RangerMainForm";
+            this.Name = "RangerForm";
             this.Text = "File Ranger";
             this.Load += new System.EventHandler(this.RangerMainForm_Load);
             this.MainSplitContainer.Panel1.ResumeLayout(false);

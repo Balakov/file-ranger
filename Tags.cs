@@ -12,7 +12,7 @@ namespace Ranger
 
     public class PathTag
     {
-        public string Path { get; }
+        public string Path { get; set; }
         public PathTag(string path) { Path = path; }
     }
 

@@ -28,62 +28,92 @@
         /// </summary>
         private void InitializeComponent()
         {
-            this.splitContainer1 = new System.Windows.Forms.SplitContainer();
-            this.listView1 = new System.Windows.Forms.ListView();
+            this.groupBox1 = new System.Windows.Forms.GroupBox();
+            this.ToolBarBookmarksListView = new System.Windows.Forms.ListView();
             this.columnHeader1 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
+            this.ToolBarUpButton = new System.Windows.Forms.Button();
+            this.ToolBarDownButton = new System.Windows.Forms.Button();
             this.MyOKButton = new System.Windows.Forms.Button();
             this.MyCancelButton = new System.Windows.Forms.Button();
-            ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).BeginInit();
-            this.splitContainer1.Panel1.SuspendLayout();
-            this.splitContainer1.SuspendLayout();
+            this.groupBox1.SuspendLayout();
             this.SuspendLayout();
             // 
-            // splitContainer1
+            // groupBox1
             // 
-            this.splitContainer1.Location = new System.Drawing.Point(12, 12);
-            this.splitContainer1.Name = "splitContainer1";
+            this.groupBox1.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+            this.groupBox1.Controls.Add(this.ToolBarBookmarksListView);
+            this.groupBox1.Controls.Add(this.ToolBarUpButton);
+            this.groupBox1.Controls.Add(this.ToolBarDownButton);
+            this.groupBox1.Location = new System.Drawing.Point(12, 12);
+            this.groupBox1.Name = "groupBox1";
+            this.groupBox1.Size = new System.Drawing.Size(299, 389);
+            this.groupBox1.TabIndex = 1;
+            this.groupBox1.TabStop = false;
+            this.groupBox1.Text = "Bookmarks";
             // 
-            // splitContainer1.Panel1
+            // ToolBarBookmarksListView
             // 
-            this.splitContainer1.Panel1.Controls.Add(this.listView1);
-            this.splitContainer1.Size = new System.Drawing.Size(516, 359);
-            this.splitContainer1.SplitterDistance = 252;
-            this.splitContainer1.TabIndex = 0;
-            // 
-            // listView1
-            // 
-            this.listView1.Columns.AddRange(new System.Windows.Forms.ColumnHeader[] {
+            this.ToolBarBookmarksListView.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+            this.ToolBarBookmarksListView.Columns.AddRange(new System.Windows.Forms.ColumnHeader[] {
             this.columnHeader1});
-            this.listView1.FullRowSelect = true;
-            this.listView1.HeaderStyle = System.Windows.Forms.ColumnHeaderStyle.None;
-            this.listView1.HideSelection = false;
-            this.listView1.Location = new System.Drawing.Point(18, 13);
-            this.listView1.Name = "listView1";
-            this.listView1.Size = new System.Drawing.Size(213, 277);
-            this.listView1.TabIndex = 0;
-            this.listView1.UseCompatibleStateImageBehavior = false;
-            this.listView1.View = System.Windows.Forms.View.Details;
+            this.ToolBarBookmarksListView.FullRowSelect = true;
+            this.ToolBarBookmarksListView.HeaderStyle = System.Windows.Forms.ColumnHeaderStyle.None;
+            this.ToolBarBookmarksListView.HideSelection = false;
+            this.ToolBarBookmarksListView.Location = new System.Drawing.Point(6, 19);
+            this.ToolBarBookmarksListView.Name = "ToolBarBookmarksListView";
+            this.ToolBarBookmarksListView.Size = new System.Drawing.Size(287, 335);
+            this.ToolBarBookmarksListView.TabIndex = 0;
+            this.ToolBarBookmarksListView.UseCompatibleStateImageBehavior = false;
+            this.ToolBarBookmarksListView.View = System.Windows.Forms.View.Details;
+            // 
+            // ToolBarUpButton
+            // 
+            this.ToolBarUpButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
+            this.ToolBarUpButton.Location = new System.Drawing.Point(6, 360);
+            this.ToolBarUpButton.Name = "ToolBarUpButton";
+            this.ToolBarUpButton.Size = new System.Drawing.Size(75, 23);
+            this.ToolBarUpButton.TabIndex = 3;
+            this.ToolBarUpButton.Text = "Up";
+            this.ToolBarUpButton.UseVisualStyleBackColor = true;
+            this.ToolBarUpButton.Click += new System.EventHandler(this.ToolBarUpButton_Click);
+            // 
+            // ToolBarDownButton
+            // 
+            this.ToolBarDownButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
+            this.ToolBarDownButton.Location = new System.Drawing.Point(87, 360);
+            this.ToolBarDownButton.Name = "ToolBarDownButton";
+            this.ToolBarDownButton.Size = new System.Drawing.Size(75, 23);
+            this.ToolBarDownButton.TabIndex = 4;
+            this.ToolBarDownButton.Text = "Down";
+            this.ToolBarDownButton.UseVisualStyleBackColor = true;
+            this.ToolBarDownButton.Click += new System.EventHandler(this.ToolBarDownButton_Click);
             // 
             // MyOKButton
             // 
             this.MyOKButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-            this.MyOKButton.Location = new System.Drawing.Point(372, 392);
+            this.MyOKButton.Location = new System.Drawing.Point(155, 415);
             this.MyOKButton.Name = "MyOKButton";
             this.MyOKButton.Size = new System.Drawing.Size(75, 23);
             this.MyOKButton.TabIndex = 1;
             this.MyOKButton.Text = "OK";
             this.MyOKButton.UseVisualStyleBackColor = true;
+            this.MyOKButton.Click += new System.EventHandler(this.MyOKButton_Click);
             // 
             // MyCancelButton
             // 
             this.MyCancelButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
             this.MyCancelButton.DialogResult = System.Windows.Forms.DialogResult.Cancel;
-            this.MyCancelButton.Location = new System.Drawing.Point(453, 392);
+            this.MyCancelButton.Location = new System.Drawing.Point(236, 415);
             this.MyCancelButton.Name = "MyCancelButton";
             this.MyCancelButton.Size = new System.Drawing.Size(75, 23);
             this.MyCancelButton.TabIndex = 2;
             this.MyCancelButton.Text = "Cancel";
             this.MyCancelButton.UseVisualStyleBackColor = true;
+            this.MyCancelButton.Click += new System.EventHandler(this.MyCancelButton_Click);
             // 
             // OrganiseBookmarksForm
             // 
@@ -91,27 +121,26 @@
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.CancelButton = this.MyCancelButton;
-            this.ClientSize = new System.Drawing.Size(540, 427);
+            this.ClientSize = new System.Drawing.Size(323, 450);
+            this.Controls.Add(this.groupBox1);
             this.Controls.Add(this.MyCancelButton);
             this.Controls.Add(this.MyOKButton);
-            this.Controls.Add(this.splitContainer1);
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.SizableToolWindow;
             this.Name = "OrganiseBookmarksForm";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterParent;
             this.Text = "Organise Bookmarks";
-            this.splitContainer1.Panel1.ResumeLayout(false);
-            ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).EndInit();
-            this.splitContainer1.ResumeLayout(false);
+            this.groupBox1.ResumeLayout(false);
             this.ResumeLayout(false);
 
         }
 
         #endregion
-
-        private System.Windows.Forms.SplitContainer splitContainer1;
-        private System.Windows.Forms.ListView listView1;
+        private System.Windows.Forms.ListView ToolBarBookmarksListView;
         private System.Windows.Forms.ColumnHeader columnHeader1;
         private System.Windows.Forms.Button MyOKButton;
         private System.Windows.Forms.Button MyCancelButton;
+        private System.Windows.Forms.Button ToolBarUpButton;
+        private System.Windows.Forms.Button ToolBarDownButton;
+        private System.Windows.Forms.GroupBox groupBox1;
     }
 }

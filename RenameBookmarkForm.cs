@@ -1,30 +1,19 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
-using System.Drawing;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace Ranger
 {
     public partial class RenameBookmarkForm : Form
     {
-        public string DisplayName
-        {
-            get
-            {
-                return NameTextBox.Text;
-            }
-        }
+        public string DisplayName => NameTextBox.Text;
+        public string Path => PathTextBox.Text;
 
-        public RenameBookmarkForm(string initialDisplayName)
+        public RenameBookmarkForm(string initialDisplayName, string initialPath)
         {
             InitializeComponent();
 
             NameTextBox.Text = initialDisplayName;
+            PathTextBox.Text = initialPath;
         }
 
         private void MyOKButton_Click(object sender, EventArgs e)
@@ -39,7 +28,20 @@ namespace Ranger
 
         private void NameTextBox_TextChanged(object sender, EventArgs e)
         {
-            MyOKButton.Enabled = !string.IsNullOrEmpty(NameTextBox.Text) && !NameTextBox.Text.Contains("|");
+            ValidateText();
         }
+
+        private void PathTextBox_TextChanged(object sender, EventArgs e)
+        {
+            ValidateText();
+        }
+        
+        private void ValidateText()
+        {
+            MyOKButton.Enabled = !string.IsNullOrEmpty(NameTextBox.Text) &&
+                                 !NameTextBox.Text.Contains("|") &&
+                                 !string.IsNullOrEmpty(PathTextBox.Text);
+        }
+
     }
 }
