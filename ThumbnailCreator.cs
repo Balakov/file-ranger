@@ -1,5 +1,7 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Drawing;
+using System.IO;
 using System.Threading;
 using System.Windows.Forms;
 
@@ -15,8 +17,10 @@ namespace Ranger
             void AddThumbnail(Image image, int index, ImageList currentImageList);
         }
 
-        public ThumbnailCreator(List<string> files, IAddThumbnail thumbnailProcessor, int thumbnailWidth, int thumbnailHeight, ImageList currentImageList, ThumbnailCache thumbnailCache)
+        public ThumbnailCreator(List<string> files, IAddThumbnail thumbnailProcessor, int thumbnailWidth, int thumbnailHeight, ImageList currentImageList, ThumbnailCache thumbnailCache, string[] supportedImageExtensions)
         {
+            HashSet<string> supportedExtensionsHash = new HashSet<string>(supportedImageExtensions);
+
             m_thread = new Thread(() =>
             {
                 int index = 0;
@@ -34,8 +38,15 @@ namespace Ranger
                     }
                     else
                     {
-                        var thumbnail = ImageLoader.Load(file, thumbnailWidth, thumbnailHeight, thumbnailCache);
-                        thumbnailProcessor.AddThumbnail(thumbnail, index, currentImageList);
+                        if (supportedExtensionsHash.Contains(Path.GetExtension(file).ToLower()))
+                        {
+                            var thumbnail = ImageLoader.Load(file, thumbnailWidth, thumbnailHeight, thumbnailCache);
+                            thumbnailProcessor.AddThumbnail(thumbnail, index, currentImageList);
+                        }
+                        else
+                        {
+                            thumbnailProcessor.AddThumbnail(ImageLoader.EmptyImage, index, currentImageList);
+                        }
                     }
 
                     index++;

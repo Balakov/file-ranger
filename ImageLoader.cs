@@ -147,5 +147,7 @@ namespace Ranger
 
             return bmp;
         }
+
+        public static Image EmptyImage { get; } = new Bitmap(16, 16);
     }
 }

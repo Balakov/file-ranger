@@ -488,7 +488,7 @@ namespace Ranger
                         }
                     }
 
-                    m_thumbnailCreator = new ThumbnailCreator(allFiles, this, c_thumbnailWidth, c_thumbnailHeight, imageList, m_thumbnailCache);
+                    m_thumbnailCreator = new ThumbnailCreator(allFiles, this, c_thumbnailWidth, c_thumbnailHeight, imageList, m_thumbnailCache, m_supportedImageExtensions);
                 }
                 else
                 {
