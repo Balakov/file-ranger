@@ -186,33 +186,22 @@ namespace Ranger
             int i = 0;
             foreach (ToolStripItem item in NavigationToolStrip.Items)
             {
-                if (item.Tag is BookmarkDirectoryTag)
+                if (item.Tag is BookmarkTag bookmark)
                 {
-                    var tag = item.Tag as BookmarkDirectoryTag;
-                    m_config.SetValue($"bookmark{i}", $"Toolbar|Directory|{tag.DisplayName}|{tag.Path}");
-                    i++;
-                }
-                else if (item.Tag is BookmarkFileTag)
-                {
-                    var tag = item.Tag as BookmarkFileTag;
-                    m_config.SetValue($"bookmark{i}", $"Toolbar|File|{tag.DisplayName}|{tag.Path}");
+                    string openWithString = bookmark.OpenWithExplorer ? "OpenWithExplorer" : "OpenWithRanger";
+                    string typeString = bookmark is BookmarkDirectoryTag ? "Directory" : "File";
+                    m_config.SetValue($"bookmark{i}", $"Toolbar|{typeString}|{openWithString}|{bookmark.DisplayName}|{bookmark.Path}");
                     i++;
                 }
             }
 
             foreach (TreeNode item in DrivesTreeView.Nodes[0].Nodes)
             {
-                if (item.Tag is BookmarkDirectoryTag)
+                if (item.Tag is BookmarkTag bookmark)
                 {
-                    var tag = item.Tag as BookmarkDirectoryTag;
-                    m_config.SetValue($"bookmark{i}", $"Tree|Directory|{tag.DisplayName}|{tag.Path}");
-                    i++;
-                }
-                else if (item.Tag is BookmarkFileTag)
-                {
-                    var tag = item.Tag as BookmarkFileTag;
-                    m_config.SetValue($"bookmark{i}", $"Tree|File|{tag.DisplayName}|{tag.Path}");
-                    i++;
+                    string openWithString = bookmark.OpenWithExplorer ? "OpenWithExplorer" : "OpenWithRanger";
+                    string typeString = bookmark is BookmarkDirectoryTag ? "Directory" : "File";
+                    m_config.SetValue($"bookmark{i}", $"Tree|{typeString}|{openWithString}|{bookmark.DisplayName}|{bookmark.Path}");
                 }
             }
 
@@ -380,14 +369,22 @@ namespace Ranger
                 {
                     string[] bookmarkData = bookmark.Split('|');
 
-                    if (bookmarkData.Length  == 4)
+                    if (bookmarkData.Length == 4)
                     {
                         BookmarkContainer container = (bookmarkData[0] == "Tree") ? BookmarkContainer.TreeView : BookmarkContainer.Toolbar;
                         BookmarkType type = (bookmarkData[1] == "File") ? BookmarkType.File : BookmarkType.Directory;
                         string displayName = bookmarkData[2];
                         string path = bookmarkData[3];
-
-                        AddBookmark(path, displayName, type, container);
+                        AddBookmark(path, displayName, type, container, openWithExplorer: false);
+                    }
+                    else if (bookmarkData.Length == 5)
+                    {
+                        BookmarkContainer container = (bookmarkData[0] == "Tree") ? BookmarkContainer.TreeView : BookmarkContainer.Toolbar;
+                        BookmarkType type = (bookmarkData[1] == "File") ? BookmarkType.File : BookmarkType.Directory;
+                        bool openWithExplorer = (bookmarkData[2] == "OpenWithExplorer");
+                        string displayName = bookmarkData[3];
+                        string path = bookmarkData[4];
+                        AddBookmark(path, displayName, type, container, openWithExplorer);
                     }
                 }
 
@@ -494,6 +491,7 @@ namespace Ranger
             {
                 string newDir = null;
                 string fileToSelect = null;
+                bool openWithExplorer = false;
 
                 if (e.Node.Tag is DirectoryTag)
                 {
@@ -503,15 +501,16 @@ namespace Ranger
                 {
                     newDir = (e.Node.Tag as LazyDirectoryTag).Path;
                 }
-                else if (e.Node.Tag is BookmarkDirectoryTag)
+                else if (e.Node.Tag is BookmarkDirectoryTag dirBookmark)
                 {
-                    newDir = (e.Node.Tag as BookmarkDirectoryTag).Path;
+                    newDir = dirBookmark.Path;
+                    openWithExplorer = dirBookmark.OpenWithExplorer;
                 }
-                else if (e.Node.Tag is BookmarkFileTag)
+                else if (e.Node.Tag is BookmarkFileTag fileBookmark)
                 {
-                    string path = (e.Node.Tag as BookmarkFileTag).Path;
-                    newDir = Path.GetDirectoryName(path);
-                    fileToSelect = Path.GetFileName(path);
+                    newDir = Path.GetDirectoryName(fileBookmark.Path);
+                    fileToSelect = Path.GetFileName(fileBookmark.Path);
+                    openWithExplorer = fileBookmark.OpenWithExplorer;
                 }
                 else if (e.Node.Tag is RecycleBinTag)
                 {
@@ -520,7 +519,14 @@ namespace Ranger
 
                 if (newDir != null)
                 {
-                    m_activePane.SetDirectory(newDir, fileToSelect);
+                    if (openWithExplorer)
+                    {
+                        FileOperations.ExecuteWithExplorer(newDir);
+                    }
+                    else
+                    {
+                        m_activePane.SetDirectory(newDir, fileToSelect);
+                    }
                 }
             }
         }
@@ -686,18 +692,18 @@ namespace Ranger
             {
                 if (Directory.Exists(path))
                 {
-                    AddBookmark(path, Path.GetFileName(path), BookmarkType.Directory, containerType);
+                    AddBookmark(path, Path.GetFileName(path), BookmarkType.Directory, containerType, openWithExplorer: false);
                     break;  // Only add first
                 }
                 else if (File.Exists(path))
                 {
-                    AddBookmark(path, Path.GetFileName(path), BookmarkType.File, containerType);
+                    AddBookmark(path, Path.GetFileName(path), BookmarkType.File, containerType, openWithExplorer: false);
                     break;  // Only add first
                 }
             }
         }
 
-        private void AddBookmark(string path, string displayName, BookmarkType type, BookmarkContainer container)
+        private void AddBookmark(string path, string displayName, BookmarkType type, BookmarkContainer container, bool openWithExplorer)
         {
             int imageIndex = 0;
             BookmarkTag tag = null;
@@ -705,12 +711,12 @@ namespace Ranger
             if (type == BookmarkType.Directory)
             {
                 imageIndex = m_iconListManager.AddFolderIcon(path, true);
-                tag = new BookmarkDirectoryTag(path);
+                tag = new BookmarkDirectoryTag(path, openWithExplorer);
             }
             else
             {
                 imageIndex = m_iconListManager.AddFileIcon(path, true);
-                tag = new BookmarkFileTag(path);
+                tag = new BookmarkFileTag(path, openWithExplorer);
             }
 
             if (tag != null)
@@ -759,9 +765,16 @@ namespace Ranger
 
                     m_activePane.SetDirectory(directory, file);
                 }
-                else if (item.Tag is BookmarkDirectoryTag)
+                else if (item.Tag is BookmarkDirectoryTag bookmark)
                 {
-                    m_activePane.SetDirectory((item.Tag as BookmarkDirectoryTag).Path);
+                    if (bookmark.OpenWithExplorer)
+                    {
+                        FileOperations.ExecuteWithExplorer(bookmark.Path);
+                    }
+                    else
+                    {
+                        m_activePane.SetDirectory(bookmark.Path);
+                    }
                 }
             }
         }
@@ -843,15 +856,17 @@ namespace Ranger
         private void RenameToolStripMenuItem_Click(object sender, EventArgs e)
         {
             object UIItem;
-            var bookmarkTag = BookmarkButtonFromContextClick(sender, out UIItem);
+            BookmarkTag bookmarkTag = BookmarkButtonFromContextClick(sender, out UIItem);
+
             if (bookmarkTag != null)
             {
-                var form = new RenameBookmarkForm(bookmarkTag.DisplayName, bookmarkTag.Path);
+                var form = new RenameBookmarkForm(bookmarkTag.DisplayName, bookmarkTag.Path, bookmarkTag.OpenWithExplorer);
 
                 if (form.ShowDialog(this) == DialogResult.OK)
                 {
                     bookmarkTag.DisplayName = form.DisplayName;
                     bookmarkTag.Path = form.Path;
+                    bookmarkTag.OpenWithExplorer = form.OpenWithExplorer;
 
                     if (UIItem is ToolStripButtonWithContextMenu)
                     {
@@ -868,13 +883,13 @@ namespace Ranger
         private void AddCurrentDirectoryToToolstripToolStripMenuItem_Click(object sender, EventArgs e)
         {
             string displayName = Path.GetFileName(m_activePane.CurrentPath.TrimEnd(new char[] { '\\' }));
-            AddBookmark(m_activePane.CurrentPath, displayName, BookmarkType.Directory, BookmarkContainer.Toolbar);
+            AddBookmark(m_activePane.CurrentPath, displayName, BookmarkType.Directory, BookmarkContainer.Toolbar, openWithExplorer: false);
         }
 
         private void AddCurrentDirectoryToTreeToolStripMenuItem_Click(object sender, EventArgs e)
         {
             string displayName = Path.GetFileName(m_activePane.CurrentPath.TrimEnd(new char[] { '\\' }));
-            AddBookmark(m_activePane.CurrentPath, displayName, BookmarkType.Directory, BookmarkContainer.TreeView);
+            AddBookmark(m_activePane.CurrentPath, displayName, BookmarkType.Directory, BookmarkContainer.TreeView, openWithExplorer: false);
         }
 
         private void BookmarksContextMenuStrip_Opening(object sender, System.ComponentModel.CancelEventArgs e)
@@ -959,7 +974,8 @@ namespace Ranger
                             AddBookmark(bookmark.Path,
                                         bookmark.DisplayName,
                                         (bookmark is BookmarkFileTag) ? BookmarkType.File : BookmarkType.Directory,
-                                        BookmarkContainer.Toolbar);
+                                        BookmarkContainer.Toolbar,
+                                        bookmark.OpenWithExplorer);
                         }
                     }
                 }
@@ -985,7 +1001,8 @@ namespace Ranger
                             AddBookmark(bookmark.Path,
                                         bookmark.DisplayName,
                                         (bookmark is BookmarkFileTag) ? BookmarkType.File : BookmarkType.Directory,
-                                        BookmarkContainer.TreeView);
+                                        BookmarkContainer.TreeView,
+                                        bookmark.OpenWithExplorer);
                         }
                     }
                 }

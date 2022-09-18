@@ -1567,6 +1567,16 @@ namespace Ranger
             }
         }
 
+        private void openWithExplorerToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            if (FileListView.SelectedItems[0].Tag is PathTag)
+            {
+                PathTag pathTag = FileListView.SelectedItems[0].Tag as PathTag;
+                // Do NOT add quotes around the path. This makes it not work.
+                FileOperations.ExecuteWithExplorer(pathTag.Path);
+            }
+        }
+
         private void openCommandPromptToolStripMenuItem_Click(object sender, EventArgs e)
         {
             if (FileListView.SelectedItems.Count == 1 && FileListView.SelectedItems[0].Tag is DirectoryTag)
@@ -1624,5 +1634,6 @@ namespace Ranger
 
             SetDirectory(CurrentPath);
         }
+        
     }
 }

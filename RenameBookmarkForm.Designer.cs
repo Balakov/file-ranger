@@ -35,12 +35,13 @@
             this.label1 = new System.Windows.Forms.Label();
             this.label2 = new System.Windows.Forms.Label();
             this.PathTextBox = new System.Windows.Forms.TextBox();
+            this.OpenWithExplorerCheckbox = new System.Windows.Forms.CheckBox();
             this.SuspendLayout();
             // 
             // MyOKButton
             // 
             this.MyOKButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-            this.MyOKButton.Location = new System.Drawing.Point(386, 71);
+            this.MyOKButton.Location = new System.Drawing.Point(386, 85);
             this.MyOKButton.Name = "MyOKButton";
             this.MyOKButton.Size = new System.Drawing.Size(75, 23);
             this.MyOKButton.TabIndex = 2;
@@ -52,7 +53,7 @@
             // 
             this.MyCancelButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
             this.MyCancelButton.DialogResult = System.Windows.Forms.DialogResult.Cancel;
-            this.MyCancelButton.Location = new System.Drawing.Point(467, 71);
+            this.MyCancelButton.Location = new System.Drawing.Point(467, 85);
             this.MyCancelButton.Name = "MyCancelButton";
             this.MyCancelButton.Size = new System.Drawing.Size(75, 23);
             this.MyCancelButton.TabIndex = 3;
@@ -94,13 +95,24 @@
             this.PathTextBox.TabIndex = 1;
             this.PathTextBox.TextChanged += new System.EventHandler(this.PathTextBox_TextChanged);
             // 
+            // OpenWithExplorerCheckbox
+            // 
+            this.OpenWithExplorerCheckbox.AutoSize = true;
+            this.OpenWithExplorerCheckbox.Location = new System.Drawing.Point(68, 65);
+            this.OpenWithExplorerCheckbox.Name = "OpenWithExplorerCheckbox";
+            this.OpenWithExplorerCheckbox.Size = new System.Drawing.Size(115, 17);
+            this.OpenWithExplorerCheckbox.TabIndex = 6;
+            this.OpenWithExplorerCheckbox.Text = "Open with Explorer";
+            this.OpenWithExplorerCheckbox.UseVisualStyleBackColor = true;
+            // 
             // RenameBookmarkForm
             // 
             this.AcceptButton = this.MyOKButton;
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.CancelButton = this.MyCancelButton;
-            this.ClientSize = new System.Drawing.Size(555, 106);
+            this.ClientSize = new System.Drawing.Size(555, 120);
+            this.Controls.Add(this.OpenWithExplorerCheckbox);
             this.Controls.Add(this.label2);
             this.Controls.Add(this.PathTextBox);
             this.Controls.Add(this.label1);
@@ -125,5 +137,6 @@
         private System.Windows.Forms.Label label1;
         private System.Windows.Forms.Label label2;
         private System.Windows.Forms.TextBox PathTextBox;
+        private System.Windows.Forms.CheckBox OpenWithExplorerCheckbox;
     }
 }

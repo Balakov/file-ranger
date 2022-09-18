@@ -7,13 +7,15 @@ namespace Ranger
     {
         public string DisplayName => NameTextBox.Text;
         public string Path => PathTextBox.Text;
+        public bool OpenWithExplorer => OpenWithExplorerCheckbox.Checked;
 
-        public RenameBookmarkForm(string initialDisplayName, string initialPath)
+        public RenameBookmarkForm(string initialDisplayName, string initialPath, bool openWithExplorer)
         {
             InitializeComponent();
 
             NameTextBox.Text = initialDisplayName;
             PathTextBox.Text = initialPath;
+            OpenWithExplorerCheckbox.Checked = openWithExplorer;
         }
 
         private void MyOKButton_Click(object sender, EventArgs e)

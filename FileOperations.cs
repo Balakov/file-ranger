@@ -205,6 +205,11 @@ namespace Ranger
             }
         }
 
+        public static void ExecuteWithExplorer(string path)
+        {
+            System.Diagnostics.Process.Start("explorer.exe", path);
+        }
+
         [DllImport("kernel32.dll", SetLastError = true, CharSet = CharSet.Auto)]
         [return: MarshalAs(UnmanagedType.Bool)]
         private static extern bool GetDiskFreeSpaceEx(string lpDirectoryName, out ulong lpFreeBytesAvailable, out ulong lpTotalNumberOfBytes, out ulong lpTotalNumberOfFreeBytes);

@@ -40,18 +40,23 @@ namespace Ranger
 
     public class BookmarkTag : PathTag
     {
+        public bool OpenWithExplorer { get; set; }
         public string DisplayName { get; set; }
-        public BookmarkTag(string path) : base(path) { DisplayName = System.IO.Path.GetFileName(path); }
+        public BookmarkTag(string path, bool openWithExplorer) : base(path) 
+        { 
+            DisplayName = System.IO.Path.GetFileName(path);
+            OpenWithExplorer = openWithExplorer;
+        }
     }
 
     public class BookmarkFileTag : BookmarkTag
     {
-        public BookmarkFileTag(string path) : base(path) { }
+        public BookmarkFileTag(string path, bool openWithExplorer) : base(path, openWithExplorer) { }
     }
 
     public class BookmarkDirectoryTag : BookmarkTag
     {
-        public BookmarkDirectoryTag(string path) : base(path) { }
+        public BookmarkDirectoryTag(string path, bool openWithExplorer) : base(path, openWithExplorer) { }
     }
 
     public class RecycleBinTag
