@@ -202,6 +202,7 @@ namespace Ranger
                     string openWithString = bookmark.OpenWithExplorer ? "OpenWithExplorer" : "OpenWithRanger";
                     string typeString = bookmark is BookmarkDirectoryTag ? "Directory" : "File";
                     m_config.SetValue($"bookmark{i}", $"Tree|{typeString}|{openWithString}|{bookmark.DisplayName}|{bookmark.Path}");
+                    i++;
                 }
             }
 
