@@ -62,11 +62,13 @@
     <Prefer32Bit>true</Prefer32Bit>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="Magick.NET-Q8-x86, Version=7.22.2.0, Culture=neutral, PublicKeyToken=2004825badfa91ec, processorArchitecture=x86">
-      <HintPath>packages\Magick.NET-Q8-x86.7.22.2.2\lib\net40\Magick.NET-Q8-x86.dll</HintPath>
+    <Reference Include="Magick.NET-Q8-x86, Version=14.9.0.0, Culture=neutral, PublicKeyToken=2004825badfa91ec">
+      <HintPath>packages\Magick.NET-Q8-x86.14.9.0\lib\netstandard20\Magick.NET-Q8-x86.dll</HintPath>
+      <Private>True</Private>
     </Reference>
-    <Reference Include="Magick.NET.Core, Version=5.2.2.0, Culture=neutral, PublicKeyToken=2004825badfa91ec, processorArchitecture=MSIL">
-      <HintPath>packages\Magick.NET.Core.5.2.2\lib\net40\Magick.NET.Core.dll</HintPath>
+    <Reference Include="Magick.NET.Core, Version=14.9.0.0, Culture=neutral, PublicKeyToken=2004825badfa91ec">
+      <HintPath>packages\Magick.NET.Core.14.9.0\lib\netstandard20\Magick.NET.Core.dll</HintPath>
+      <Private>True</Private>
     </Reference>
     <Reference Include="Magick.NET.SystemDrawing, Version=2.0.8.0, Culture=neutral, PublicKeyToken=2004825badfa91ec, processorArchitecture=MSIL">
       <HintPath>packages\Magick.NET.SystemDrawing.2.0.8\lib\net40\Magick.NET.SystemDrawing.dll</HintPath>
@@ -214,11 +216,11 @@
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
-  <Import Project="packages\Magick.NET-Q8-x86.7.22.2.2\build\net40\Magick.NET-Q8-x86.targets" Condition="Exists('packages\Magick.NET-Q8-x86.7.22.2.2\build\net40\Magick.NET-Q8-x86.targets')" />
+  <Import Project="packages\Magick.NET-Q8-x86.14.9.0\build\netstandard20\Magick.NET-Q8-x86.targets" Condition="Exists('packages\Magick.NET-Q8-x86.14.9.0\build\netstandard20\Magick.NET-Q8-x86.targets')" />
   <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
     <PropertyGroup>
-      <ErrorText>This project references NuGet package(s) that are missing on this computer. Use NuGet Package Restore to download them.  For more information, see http://go.microsoft.com/fwlink/?LinkID=322105. The missing file is {0}.</ErrorText>
+      <ErrorText>This project references NuGet package(s) that are missing on this computer. Enable NuGet Package Restore to download them.  For more information, see http://go.microsoft.com/fwlink/?LinkID=322105.The missing file is {0}.</ErrorText>
     </PropertyGroup>
-    <Error Condition="!Exists('packages\Magick.NET-Q8-x86.7.22.2.2\build\net40\Magick.NET-Q8-x86.targets')" Text="$([System.String]::Format('$(ErrorText)', 'packages\Magick.NET-Q8-x86.7.22.2.2\build\net40\Magick.NET-Q8-x86.targets'))" />
+    <Error Condition="!Exists('packages\Magick.NET-Q8-x86.14.9.0\build\netstandard20\Magick.NET-Q8-x86.targets')" Text="$([System.String]::Format('$(ErrorText)', 'packages\Magick.NET-Q8-x86.14.9.0\build\netstandard20\Magick.NET-Q8-x86.targets'))" />
   </Target>
 </Project>
